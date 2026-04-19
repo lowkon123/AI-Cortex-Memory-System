@@ -3,10 +3,6 @@
 
 [中文版 (Chinese)](README_ZH.md) | [English](README.md)
 
-[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
-[![pgvector](https://img.shields.io/badge/Vector-pgvector-FF6F61?style=for-the-badge)](https://github.com/pgvector/pgvector)
-[![FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-
 ---
 
 ## 🌌 Design Philosophy
@@ -16,25 +12,88 @@ In traditional Agent systems, context window limitations often lead to "memory e
 
 ---
 
-## 🧬 Cognitive Architecture
+## 🧬 Core Architecture
 
-Cortex implements a **4-Layer Vertical Memory Model** to balance breadth and depth of recall:
+### 1. 4-Layer Vertical Memory Model
+Cortex implements a **4-layer vertical memory model** to balance breadth and depth of recall:
+- **Raw Input Layer (Verbatim / L2)**: Immutable logs of 100% raw conversations. Prevents loss of critical details (e.g., variable names).
+- **Episodic Memory Layer (Events / L1)**: Summarizes data into chronological "Event Streams" for temporal reasoning.
+- **Fact Memory Layer (Semantic)**: Extracts permanent, cross-session knowledge (e.g., "User prefers React").
+- **Concept Memory Layer (Abstraction)**: Associating multiple facts into high-level conceptual maps for non-linear intuition.
 
-### 1. Raw Input Layer (Verbatim / L2) - **"Sensory Buffer"**
-- **Purpose**: Immutable logs of 100% raw conversations or code.
-- **Intent**: Preventing information loss during summarization (e.g., retaining exact variable names or user tone).
+### 2. Memory Zooming Logic (L0-L2)
+Supports dynamic granularity of context injection:
+- **L0 (Summary)**: Core intent only. Best for extremely long-span background injection.
+- **L1 (Key Points)**: Bulleted takeaways. Best for specific task execution.
+- **L2 (Raw Content)**: Verbatim data. Best for code generation or exact reproduction.
 
-### 2. Episodic Memory Layer (Events / L1) - **"The Stream"**
-- **Purpose**: Condensed, chronological event summaries ("What happened today?").
-- **Intent**: Providing temporal retrieval capabilities and timeline-based reasoning.
+---
 
-### 3. Fact Memory Layer (Semantic) - **"Knowledge Extraction"**
-- **Purpose**: Structured facts extracted from episodes (e.g., "User prefers React", "Project deadline is May 1st").
-- **Intent**: Breaking temporal boundaries to form permanent, cross-session knowledge.
+## 🔍 Hybrid Search & Navigation
 
-### 4. Concept Memory Layer (Abstraction) - **"Neural Clusters"**
-- **Purpose**: Automatically associating multiple facts into high-level conceptual maps.
-- **Intent**: Enabling non-literal semantic association, analogous to human imagination and intuition.
+### 1. Hybrid RAG Architecture
+Cortex combines two powerful search paradigms:
+- **Full-Text Search (FTS)**: Utilizing PostgreSQL `tsvector` for exact keyword matching (UUIDs, specific function names).
+- **Vector Cosine Similarity**: Utilizing `pgvector` and `BGE-M3` for deep semantic association.
+- **Weighted Fusion**: Automatically balances keyword precision with semantic ambiguity.
+
+### 2. Proactive Context Scanning
+The system runs "Scanning Probes" in the background to simulate human contemplation:
+- **Relevance Discovery**: Actively finding deep links between the current task and historical logs from months ago.
+- **Pre-emptive Injection**: Pre-loading "highly probable context" into the cache before the agent even asks.
+
+---
+
+## 🔮 Neural Ranking & Activation
+
+The "Soul" of Cortex is governed by a **12-Dimension Scoring Algorithm**:
+
+| Metric | Weight | Design Rationale |
+| :--- | :--- | :--- |
+| **Similarity** | 20% | Vector space alignment with the current query. |
+| **Recency** | 12% | **Ebbinghaus Decay**: Natural score drop-off over time. |
+| **Importance** | 14% | Priority for core requirements over trivial logs. |
+| **Frequency** | 8% | Reflects how "Active" a memory is in the brain. |
+| **Reinforcement** | 10% | Increases "Neural Strength" based on task successes. |
+| **Token Efficiency** | 10% | Prioritizing high-density summaries to save LLM costs. |
+| **Emotion/Sentiment** | 6% | Prioritizing emotionally salient context. |
+| **Novelty** | 4% | Penalty for redundant info to ensure diverse retrieval. |
+
+---
+
+## 💤 Memory Lifecycle Management
+
+### 1. The Sleep Cycle
+Mimicking human neuroplasticity during rest:
+- **Intelligent Deduplication**: When similarity > 0.96, redundant memories are merged, accumulating importance weights.
+- **Conflict Resolution**: When new facts contradict old ones, a `SUPERSEDES` link is created, flagging outdated logs.
+
+### 2. Reinforcement Learning Loop
+Built-in `Success Count` mechanism. When a memory is successfully used to solve a problem, its "Neural Path" is thickened, giving it higher retrieval priority in the future.
+
+---
+
+## 🛡️ Privacy, Security & Performance
+
+### 1. Privacy-First Local Deployment
+- **Ollama Integration**: All embeddings and extractions run locally (e.g., `bge-m3` or `llama3`), ensuring zero data leakage to the cloud.
+- **Multi-Persona Isolation**: Securely segregating memory namespaces for different Agents or Users within the same DB.
+
+### 2. High-Performance Indexing (pgvector)
+- Mature PostgreSQL ecosystem supporting `HNSW` (Hierarchical Navigable Small Worlds) indexing.
+- Sub-millisecond vector retrieval across millions of memory nodes.
+
+---
+
+## 🔌 Standardized Connectivity
+
+### 1. MCP Protocol Support
+Full support for the **Model Context Protocol (MCP)**. Cortex can seamlessly connect to:
+- **Claude Desktop** / **VS Code (Cursor/Windsurf)**
+- Any AI framework supporting the MCP standard.
+
+### 2. Agent-to-Brain Sync Philosophy
+The core mission: New agents shouldn't spend hours "reading" your docs. They connect to the Cortex and immediately inherit "Digested Project Facts."
 
 ---
 
@@ -42,58 +101,22 @@ Cortex implements a **4-Layer Vertical Memory Model** to balance breadth and dep
 
 ### 1. 3D Neural Knowledge Graph
 ![3D Neural Graph](assets/demo_3d_graph.png)
-*Demonstrating **Autonomous Semantic Clustering**. The system uses the `BGE-M3` model and `pgvector` to group 90+ memories into distinct thematic clusters based on cosine similarity.*
+*Demonstrating **Autonomous Semantic Clustering**. Visualizing how memory naturally groups into thematic hubs.*
 
 ### 2. Cognitive Episodic Timeline
 ![Cognitive Timeline](assets/demo_timeline.png)
-*Visualizing the **Episodic Memory Stream**. This view tracks interactions in chronological order, allowing the agent to perform "Mental Time Travel" for precise context retrieval.*
+*Visualizing the **Episodic Memory Stream**. Enabling precise "Mental Time Travel".*
 
 ### 3. Developer Coding Sync
 ![Coding Sync](assets/demo_coding_sync.png)
-*Demonstrating **Context-Aware Development**. A specialized interface for managing high-priority requirements and code snapshots, balancing deep history with core specifications (L0/L1).*
-
----
-
-## 🔮 Neural Ranking Engine
-
-The "Soul" of Cortex is its decision engine for what to "remember." We implement a dynamic scoring algorithm with **12 weigh-dimensions**:
-
-| Metric | Weight | Design Rationale |
-| :--- | :--- | :--- |
-| **Similarity** | 20% | Core vector space alignment with the current query. |
-| **Recency** | 12% | Implementation of the Ebbinghaus Forgetting Curve. |
-| **Importance** | 14% | Manual or AI-assigned significance (salience). |
-| **Frequency** | 8% | "Active" info that is mentioned often stays in prime context. |
-| **Reinforcement** | 10% | Manual/Automatic "strengthening" based on successful outcomes. |
-| **Token Efficiency** | 10% | Prioritizing concise, summarized nodes to save costs. |
-| **Emotion/Sentiment** | 6% | Prioritizing emotionally relevant context for better alignment. |
-| **Novelty** | 4% | Penalty for redundant information to ensure diverse retrieval. |
-
----
-
-## 💤 Memory Lifecycle (Sleep Cycle)
-
-Cortex performs autonomous background maintenance during "Sleep":
-1. **Intelligent Deduplication**: When similarity > 0.96, redundant memories are merged to keep the "mind" lean.
-2. **Neural Decay**: Trivial or low-frequency information fades over time to keep working memory clean of noise.
-3. **Consolidation**: Frequently recurring episodic patterns are consolidated into permanent semantic facts.
-
----
-
-## 🛠️ Tech Stack
-
-- **Linguistic Engine**: Python 3.10+
-- **Database**: PostgreSQL + pgvector (High-performance vector retrieval)
-- **Embeddings**: Ollama: `bge-m3` (Multilingual, high-dimensional representation)
-- **Framework**: FastAPI (Asynchronous high-performance APIs)
-- **Visualization**: Three.js / Force-Graph (Hardware-accelerated 3D rendering)
+*Demonstrating **Context-Aware Development**. Deep management of code snapshots and L0/L1 requirements.*
 
 ---
 
 ## 📬 Roadmap
-- [ ] **Agent-to-Brain Sync**: Allow new agents to skip redundant file-reading by directly syncing with the Cortex "Brain" to gain full project context instantly.
-- [ ] **Collaborative Mind**: Secure cross-agent brain communication.
-- [ ] **Multimodal Synthesis**: Storing and retrieving semantic features from images and audio.
+- [x] **Agent-to-Brain Sync**: Out-of-the-box expert context inheritance.
+- [ ] **Multimodal Synthesis**: Storing and retrieving features from images and audio.
+- [ ] **Collective Mind**: Secure sharing of non-private facts across multiple brains.
 
 ---
 *Developed with Passion for the Evolution of AI Cognition.*
