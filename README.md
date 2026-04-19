@@ -1,6 +1,8 @@
 # 🧠 Cortex Memory Engine 2.0
 > **Non-Linear Hierarchical Memory Engine: A Persistent Digital Brain for Sophisticated AI Agents**
 
+[中文版 (Chinese)](README_ZH.md) | [English](README.md)
+
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
 [![pgvector](https://img.shields.io/badge/Vector-pgvector-FF6F61?style=for-the-badge)](https://github.com/pgvector/pgvector)
 [![FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -89,9 +91,9 @@ Cortex performs autonomous background maintenance during "Sleep":
 ---
 
 ## 📬 Roadmap
+- [ ] **Agent-to-Brain Sync**: Allow new agents to skip redundant file-reading by directly syncing with the Cortex "Brain" to gain full project context instantly.
 - [ ] **Collaborative Mind**: Secure cross-agent brain communication.
 - [ ] **Multimodal Synthesis**: Storing and retrieving semantic features from images and audio.
-- [ ] **Proactive Recall**: Automatic agent "alerts" based on background contextual relevance.
 
 ---
 *Developed with Passion for the Evolution of AI Cognition.*
