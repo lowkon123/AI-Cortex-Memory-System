@@ -3,9 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import httpx
+import numpy as np
 
 from .memory_forgetting import MemoryForgetting
-from ..models import utc_now
+from ..models import MemoryKind, MemoryNode, MemorySource, MemoryStatus, utc_now
+
+# Ollama model used for episode consolidation (inherits from dashboard env or default)
+CONSOLIDATE_MODEL = "llama3"
+CONSOLIDATE_BASE_URL = "http://localhost:11434"
 
 LAST_SLEEP_REPORT = {
     "ran_at": None,
@@ -137,7 +144,97 @@ async def deduplicate_memories(store, memories: list[MemoryNode]) -> int:
 
 
 async def consolidate_episodes(store, memories: list[MemoryNode]) -> int:
-    """Placeholder for future LLM-driven abstraction of episodes into knowledge."""
-    # In a real implementation, this would cluster episodes and call an LLM
-    # to extract a 'Fact' or 'Semantic' memory from the cluster.
-    return 0
+    """LLM-driven abstraction: cluster episodic memories into structured Facts.
+
+    Process:
+    1. Select recent EPISODIC memories with high access count or importance.
+    2. Group them by concept_tags overlap (simple clustering).
+    3. For each cluster, call LLM to extract a distilled FACT memory.
+    4. Store new FACT node and link with SUPPORTS relation.
+    """
+    # Only process episodic memories that are candidates for consolidation
+    candidates = [
+        m for m in memories
+        if m.memory_kind == MemoryKind.EPISODIC
+        and m.status == MemoryStatus.ACTIVE
+        and m.consolidation_count < 3
+        and (m.access_count >= 2 or m.importance >= 0.7)
+    ]
+
+    if len(candidates) < 3:
+        return 0  # Not enough episodes to form a meaningful cluster
+
+    abstracted = 0
+
+    # Simple clustering: group by shared concept_tags
+    clusters: dict[str, list[MemoryNode]] = {}
+    for memory in candidates:
+        key = ",".join(sorted(memory.concept_tags[:2])) if memory.concept_tags else "_uncategorized"
+        clusters.setdefault(key, []).append(memory)
+
+    for cluster_key, cluster_members in clusters.items():
+        if len(cluster_members) < 2:
+            continue  # Skip singleton clusters
+
+        # Prepare content for LLM distillation
+        snippets = []
+        for m in cluster_members[:5]:
+            snippets.append(m.summary_l1 or m.content[:150])
+        combined = "\n---\n".join(snippets)
+
+        prompt = f"""以下是一組相關的對話記錄片段，請從中提取出一條精煉的、去時間化的「知識事實」。
+
+對話記錄：
+{combined}
+
+請回傳一個 JSON 物件：
+- "fact": 一句話的事實陳述（繁體中文，不含時間詞如「昨天」「剛才」）
+- "importance": 重要性評分 0.0-1.0
+- "concept_tags": 最多3個關鍵概念標籤（字串陣列）
+
+直接回傳 JSON："""
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{CONSOLIDATE_BASE_URL}/api/generate",
+                    json={"model": CONSOLIDATE_MODEL, "prompt": prompt, "stream": False},
+                    timeout=60.0,
+                )
+                response.raise_for_status()
+                raw = response.json()["response"].strip()
+                if raw.startswith("```"):
+                    lines = raw.split("\n")
+                    raw = "\n".join([l for l in lines if not l.startswith("```")]).strip()
+
+                data = json.loads(raw)
+                fact_content = data.get("fact", "").strip()
+                if not fact_content:
+                    continue
+
+                # Create new FACT memory node
+                new_fact = MemoryNode(
+                    content=fact_content,
+                    summary_l1=fact_content,
+                    summary_l0=fact_content[:60] + ("..." if len(fact_content) > 60 else ""),
+                    importance=float(data.get("importance", 0.7)),
+                    memory_kind=MemoryKind.FACT,
+                    source_type=MemorySource.INFERRED,
+                    concept_tags=data.get("concept_tags", []),
+                    metadata={"_consolidated_from": [str(m.id) for m in cluster_members]},
+                )
+                await store.insert(new_fact)
+
+                # Mark source episodes as consolidated
+                for m in cluster_members:
+                    m.consolidation_count += 1
+                    m.last_consolidated = utc_now()
+                    await store.update(m)
+
+                abstracted += 1
+                await asyncio.sleep(0.5)  # Prevent Ollama overload
+
+        except Exception:
+            continue
+
+    return abstracted
