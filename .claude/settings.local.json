@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python cortex_mcp_server.py)",
+      "Bash(curl -s http://127.0.0.1:8002/health)",
+      "mcp__cortex-memory__search_cortex_memory",
+      "mcp__cortex-memory__get_engine_stats",
+      "mcp__cortex-memory__list_recent_memories",
+      "mcp__cortex-memory__recall_structured_memory",
+      "mcp__cortex-memory__save_general_memory"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "cortex-memory"
+  ]
+}

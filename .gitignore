@@ -1,0 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data and Secret
+data/
+*.env
+.vscode/
+.idea/
+
+# Testing
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+
+# Scratch and Temp
+scratch/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db

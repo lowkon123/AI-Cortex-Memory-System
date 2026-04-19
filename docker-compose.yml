@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: ankane/pgvector:v0.5.1
+    container_name: cortex-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: cortex_memory
+      POSTGRES_USER: cortex_user
+      POSTGRES_PASSWORD: cortex_pass
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./api/sql:/docker-entrypoint-initdb.d
+
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cortex_user -d cortex_memory']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+#  memory-api:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.api
+#    container_name: cortex-memory-api
+#    environment:
+#      DB_HOST: postgres
+#      DB_PORT: 5432
+#      DB_NAME: cortex_memory
+#      DB_USER: cortex_user
+#      DB_PASSWORD: cortex_pass
+#      VECTOR_DIM: '1024'
+#      EMBEDDING_API: http://host.docker.internal:11434/api/embeddings
+#    ports:
+#      - '8002:8000'
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#    restart: unless-stopped
+#    extra_hosts:
+#      - 'host.docker.internal:host-gateway'
+
+
+volumes:
+  postgres_data:

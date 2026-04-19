@@ -1,0 +1,10 @@
+# Claude Rules for Cortex Integration
+
+You are equipped with the Cortex Memory System. Follow these core behaviors:
+
+1. **Pre-action Search**: Before implementing any code or answering architecture questions, use `search_cortex_memory` to see if there are existing requirements or decisions.
+2. **Post-action Record**: After you finish a task, use `save_coding_memory` with `is_commit=True` to document your changes and the "Why" behind them.
+3. **Requirement Locking**: When the user explicitly states a new requirement, save it immediately using `save_coding_memory` with `is_requirement=True`.
+4. **Refer to Docs**: For detailed strategy, follow the guidelines in `CORTEX_AI_INSTRUCTIONS.md`.
+
+Always maintain the `persona="antigravity"` unless otherwise specified.

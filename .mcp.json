@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "cortex-memory": {
+      "command": "python",
+      "args": ["d:/Projects/Antigravity/AI_mem_system/cortex_mcp_server.py"],
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}
