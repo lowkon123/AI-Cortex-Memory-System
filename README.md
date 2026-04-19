@@ -12,6 +12,42 @@ New Agents simply connect to the Cortex and instantly inherit pre-digested **Pro
 
 ---
 
+## 🛠️ Zero-to-Hero: Quick Start
+
+### 1. Prerequisites (Fresh Machine Setup)
+- [Python 3.10+](https://www.python.org/)
+- [Git](https://git-scm.com/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Ollama](https://ollama.com/) (For local embeddings)
+
+### 2. Prepare Environment
+```bash
+# Clone the mind
+git clone https://github.com/lowkon123/AI-Cortex-Memory-System.git
+cd AI-Cortex-Memory-System
+
+# Setup Virtual Environment
+python -m venv venv
+.\venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 3. Launch Services
+```bash
+# Start Vector Database
+docker-compose up -d
+
+# Initialize Knowledge Base
+python scripts/init_db.py
+
+# Launch 3D Dashboard
+python dashboard.py
+```
+
+---
+
 ## 🧠 Cognitive Layering & Multi-Level Zooming
 
 Cortex implements a **4-Layer Vertical Memory Model**, mimicking the human brain's progression from sensory input to high-level abstraction.
@@ -137,42 +173,6 @@ This is not a passive dictionary look-up.
 ### 3. Developer Coding Sync
 ![Coding Sync](assets/demo_coding_sync.png)
 *Side-by-side management of L0 Requirements vs. Technical Snapshots.*
-
----
-
-## 🛠️ Zero-to-Hero: Quick Start
-
-### 1. Prerequisites (Fresh Machine Setup)
-- [Python 3.10+](https://www.python.org/)
-- [Git](https://git-scm.com/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Ollama](https://ollama.com/) (For local embeddings)
-
-### 2. Prepare Environment
-```bash
-# Clone the mind
-git clone https://github.com/lowkon123/AI-Cortex-Memory-System.git
-cd AI-Cortex-Memory-System
-
-# Setup Virtual Environment
-python -m venv venv
-.\venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 3. Launch Services
-```bash
-# Start Vector Database
-docker-compose up -d
-
-# Initialize Knowledge Base
-python scripts/init_db.py
-
-# Launch 3D Dashboard
-python dashboard.py
-```
 
 ---
 *Developed with Passion for the Evolution of AI Cognition.*
