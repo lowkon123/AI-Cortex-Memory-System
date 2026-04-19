@@ -1,310 +1,85 @@
 # Cortex Memory Engine
 
+[繁體中文版](./README_ZH.md)
+
 A local AI memory system designed to feel closer to human memory than a plain note store or vector database.
 
-Instead of treating memory as static documents, Cortex Memory Engine treats memory as something that can be:
+Instead of treating memory as static documents, Cortex Memory Engine treats memory as something that can be formed, compressed, recalled, reinforced, consolidated, and forgotten.
 
-- formed
-- compressed
-- recalled
-- reinforced
-- consolidated
-- forgotten
-
-The goal is simple:
-
-`maximize useful recall while minimizing prompt/context cost`
-
-## What This Project Is
-
-Cortex Memory Engine is a reusable memory layer for AI systems.
-
-It includes:
-
-- a memory dashboard for visual inspection
-- a chat demo wired into the memory system
-- a local REST API that other AI tools can call
-- ranking, reinforcement, forgetting, and sleep-cycle logic
-
-This means it can act as:
-
-- a standalone AI memory experiment
-- a local second-brain backend
-- a plug-in memory service for tools like Claude Code, Codex, Antigravity, OpenWebUI, or custom agents
-
-## Core Ideas
-
-- Hierarchical memory: `L0 / L1 / L2`
-- Dynamic recall: similarity is not enough; activation matters
-- Token efficiency: summaries first, details on demand
-- Reinforcement: useful memories get stronger
-- Forgetting: stale or weak memories fade
-- Sleep cycle: memories can be consolidated in the background
-- Persona isolation: different AIs can share one memory service without sharing all memories
-
-## Main Components
-
-### Dashboard
-
-- File: [dashboard.py](dashboard.py)
-- Visual 3D memory graph
-- Memory detail panel
-- Stats and timeline views
-
-### Chat Demo
-
-- File: [chat.py](chat.py)
-- Uses memory recall before generation
-- Stores dialogue back into memory after the turn
-- Reinforces recalled memories after successful use
-
-### Reusable API
-
-- Folder: [api](api)
-- Exposes memory CRUD, search, and AI-facing integration endpoints
-
-### Memory Core
-
-- Folder: [src](src)
-- Data model, ranking, context building, forgetting, feedback, graph recall, and sleep-cycle logic
-
-## Key Features
-
-- 3D memory visualization
-- Double-click memory inspection
-- Memory activation scoring
-- Confidence and emotional weighting
-- Concept tags
-- Persona-aware recall
-- Reinforcement feedback
-- Sleep report
-- API-based external integration
-
-## Current Ports
-
-Typical defaults:
-
-- Dashboard: `http://127.0.0.1:8000`
-- Memory API: `http://127.0.0.1:8002`
-
-If `8000` is already occupied or you need a clean dashboard instance:
-
-- [run_dashboard_8001.py](run_dashboard_8001.py)
-- Dashboard alt port: `http://127.0.0.1:8001`
+The goal is simple: `maximize useful recall while minimizing prompt/context cost`
 
 ## 🚀 Quick Start (Zero to Hero)
 
-這是一個完整的安裝流程，即使是剛重灌的電腦，按順序執行即可完成：
+This is a complete installation process for a fresh system:
 
-### 1. 準備基礎工具
-請確保您的電腦已安裝以下軟體：
+### 1. Prerequisites
+Ensure you have the following installed:
 - [Python 3.10+](https://www.python.org/downloads/)
 - [Git](https://git-scm.com/downloads)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (用於執行資料庫)
-- [Ollama](https://ollama.com/download) (用於本地 AI 模型)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (For the database)
+- [Ollama](https://ollama.com/download) (For local AI models)
 
-### 2. 環境設定
-打開您的終端機 (Terminal / PowerShell)，執行以下指令：
+### 2. Environment Setup
+Open your Terminal or PowerShell and run:
 
 ```bash
-# 1. 複製專案
+# 1. Clone the project
 git clone https://github.com/lowkon123/AI-Cortex-Memory-System.git
 cd AI-Cortex-Memory-System
 
-# 2. 建立並啟動虛擬環境 (建議)
+# 2. Setup virtual environment (Recommended)
 python -m venv venv
 # Windows:
 .\venv\Scripts\activate
 # Mac/Linux:
 source venv/bin/activate
 
-# 3. 安裝 Python 套件
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. 下載向量模型 (非常重要)
+# 4. Pull the embedding model (Crucial)
 ollama pull bge-m3
 ```
 
-### 3. 啟動服務
-1.  **啟動資料庫**：確保 Docker 正在執行，然後輸入：
+### 3. Launch Services
+1.  **Start Database**: Ensure Docker is running, then run:
     ```bash
-    docker-compose up -d
+    docker compose up -d
     ```
-2.  **啟動系統** (Windows)：
-    直接雙擊執行 `launch_services.bat`。
+2.  **Launch System** (Windows):
+    Simply double-click `launch_services.bat`.
     
-    *或是手動啟動 (全平台)：*
+    *Or manually (All Platforms):*
     - API: `python -m uvicorn api.main:app --port 8002`
     - Dashboard: `python dashboard.py`
 
-### 4. 驗證
-- **3D 儀表板**: 打開瀏覽器訪問 `http://localhost:8000`
-- **API 狀態**: 訪問 `http://localhost:8002/health` 如果顯示 `status: healthy` 即代表成功！
+### 4. Verification
+- **3D Dashboard**: Visit `http://localhost:8000`
+- **API Status**: Visit `http://localhost:8002/health`. If it shows `status: healthy`, you are all set!
 
 ---
 
 ## 🏗 Main Components
 
-## Run The Chat Demo
+### Dashboard
+- File: [dashboard.py](dashboard.py)
+- Visual 3D memory graph with detail panels and stats.
 
-```bash
-python chat.py
-```
+### Chat Demo
+- File: [chat.py](chat.py)
+- Interactive demo with semantic recall and reinforcement.
 
-What it does:
+### Reusable API
+- Folder: [api](api)
+- REST interface for external AI integrations.
 
-- chooses a model
-- chooses a persona
-- recalls relevant memories before answering
-- stores the turn afterward
-- reinforces memories that helped
+---
 
-## Run The API
-
-### Docker
-
-```bash
-docker-compose up -d
-```
-
-Then open:
-
-- API root: `http://127.0.0.1:8002`
-- docs: `http://127.0.0.1:8002/docs`
-
-### Direct
-
-```bash
-python -m uvicorn api.main:app --host 127.0.0.1 --port 8002
-```
-
-## API Integration Pattern
+## 🔧 Integration Pattern
 
 Any external AI can use Cortex with this loop:
+1. `POST /agent/context` (Find background)
+2. Call your LLM with the context.
+3. `POST /agent/store` (Save new outcomes)
 
-1. `POST /agent/context`
-2. append returned context to the model prompt
-3. call the model
-4. `POST /agent/store`
-5. optionally `POST /agent/reinforce`
-
-This is the shortest path to plugging Cortex into another AI system.
-
-## Most Useful API Endpoints
-
-### AI-facing
-
-- `POST /agent/store`
-- `POST /agent/recall`
-- `POST /agent/context`
-- `POST /agent/reinforce`
-
-### Search and CRUD
-
-- `POST /memories/`
-- `GET /memories/{id}`
-- `GET /memories/`
-- `PATCH /memories/{id}`
-- `DELETE /memories/{id}`
-- `POST /memories/feedback`
-- `POST /search/`
-- `GET /search/by-tags`
-- `GET /search/stats`
-
-## Python Client Example
-
-```python
-from api.client import MemoryClient
-
-client = MemoryClient("http://127.0.0.1:8002", persona="codex")
-
-context = client.build_context("What does the user prefer?", limit=5)
-
-# Put `context` into the system prompt before model generation
-
-client.agent_store(
-    content="User prefers concise engineering answers.",
-    tags=["preferences", "style"],
-    memory_kind="semantic",
-    importance=0.8,
-)
-
-recall = client.recall("What does the user prefer?", limit=3)
-memory_ids = [m["id"] for m in recall["memories"]]
-if memory_ids:
-    client.reinforce(memory_ids, boost=0.15)
-
-client.close()
-```
-
-## Integration Targets
-
-This project is now shaped to be usable by:
-
-- Claude Code
-- Codex
-- Antigravity
-- OpenWebUI
-- custom Python agents
-- any tool that can call local HTTP endpoints
-
-Reference examples:
-
-- [api/examples/python_agent_example.py](api/examples/python_agent_example.py)
-- [api/examples/openwebui_memory_tool.py](api/examples/openwebui_memory_tool.py)
-- [api/examples/cli_memory_wrapper.py](api/examples/cli_memory_wrapper.py)
-
-## Data Model Highlights
-
-Memories can carry:
-
-- `importance`
-- `importance_boost`
-- `confidence`
-- `emotional_weight`
-- `concept_tags`
-- `source_type`
-- `memory_kind`
-- `activation_score`
-- `success_count`
-- `consolidation_count`
-
-This gives you more than a normal note store or vector search stack.
-
-## Tests
-
-Core cognition logic tests live in:
-
-- [tests/test_memory_cognition.py](/d:/Projects/Antigravity/AI_mem_system/tests/test_memory_cognition.py)
-
-Run:
-
-```bash
-pytest tests/test_memory_cognition.py -q
-```
-
-## Project Structure
-
-```text
-AI_mem_system/
-├─ api/                  Reusable memory API and integration examples
-├─ src/                  Core memory logic
-├─ tests/                Tests
-├─ chat.py               Chat demo
-├─ dashboard.py          Dashboard server
-├─ run_dashboard_8001.py Alternate dashboard port
-├─ docker-compose.yml    Local API + Postgres stack
-└─ implementation_plan.md
-```
-
-## Positioning
-
-This is not just a note app.
-
-It is better described as:
-
-`a local, reusable AI memory layer that models recall, compression, reinforcement, and forgetting`
-
-Or even shorter:
-
-`not document storage, but memory for thinking systems`
+Reference: [CORTEX_AI_INSTRUCTIONS.md](./CORTEX_AI_INSTRUCTIONS.md)
