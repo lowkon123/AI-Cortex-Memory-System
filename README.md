@@ -7,7 +7,7 @@
 
 ## 🌌 The Mission: Cognitive Inheritance
 
-In traditional development, when a new AI Agent joins a project, it must consume massive amounts of tokens to "re-read" all code and documentation. **Cortex 2.0 is designed to break this inefficiency.**
+In traditional development, when a new AI Agent joins a project, it must consume massive amounts of tokens to "re-read" all code and documentation. **Cortex is designed to break this inefficiency.**
 New Agents simply connect to the Cortex and instantly inherit pre-digested **Project Facts**. We aren't just transmitting data; we are transmitting an existing "Cognitive Background."
 
 ---
@@ -45,6 +45,39 @@ python scripts/init_db.py
 # Launch 3D Dashboard
 python dashboard.py
 ```
+
+---
+
+## 🔒 Cognitive Safeguards & Maintenance
+
+To ensure the stability of AI cognition and data integrity, Cortex core features multiple built-in safeguard mechanisms:
+
+### 1. RAW Memory Layer
+The system does not just store summaries; it maintains a complete **RAW Memory Layer**. All inputs are preserved in their original L2-level version, ensuring 100% fidelity for historical retrieval and preventing detail loss or hallucinations during summarization.
+
+### 2. Memory Layering
+Cortex implements **Short-term (Working) and Long-term Memory Layering**. New information enters as Episodic streams and is only distilled into Semantic facts after technical evaluation. This prevents "noise" from polluting the AI's core architectural knowledge.
+
+### 3. Compression & Consolidation
+Featuring specialized **Integrated Compression**, the system uses its "Sleep Cycle" to deduplicate redundant information and refine knowledge, maximizing token efficiency while maintaining full informational integrity.
+
+### 4. Memory Lock Mechanism
+Key memories assigned high **Importance** or **Confidence** scores are automatically protected by the **Neural Lock**. These nodes are highly resistant to natural decay, ensuring that core specifications and critical decisions are never purged.
+
+### 5. Soft Delete Mechanism
+Cortex utilizes a **Soft Delete** logic. When a memory is "forgotten," its status changes rather than being physically deleted. This provides a recoverable "Undo" layer for developers, allowing historical traces to be restored if needed.
+
+### 6. Intelligent Memory Retrieval
+Powered by a **Hybrid Search (Vector + Full-Text)**. Whether searching for vague semantic concepts or exact variable names/UUIDs, the system precisely locates the correct memory from millions of records.
+
+### 7. Memory Evolution & Tuning
+Memories are not static. via the `Reinforcement` mechanism, memories **evolve and optimize** based on usage frequency and accuracy. Neural paths are strengthened dynamically, achieving self-adaptive knowledge growth.
+
+### 8. Data Security & Persistence
+Using a **Multi-layered Persistence Strategy**, the system ensures that AI cognitive structures are preserved through hardware failures or restarts, transitioning from Raw logs to distilled Facts for long-term safety.
+
+### 9. Multi-level Fallback
+When refined Facts are insufficient for complex queries, the system triggers a **Fallback Mechanism** to search the original RAW data (L2), ensuring the accuracy and reliability of the AI's response.
 
 ---
 
