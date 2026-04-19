@@ -5,118 +5,138 @@
 
 ---
 
-## 🌌 設計初衷 (Design Philosophy)
+## 🌌 核心使命：認知繼承 (Cognitive Inheritance)
 
-在傳統的 Agent 系統中，上下文 (Context) 往往隨著對話增長而「爆炸」，導致記憶遺忘或 LLM 處理成本飆升。
-**Cortex Memory Engine** 的誕生，是為了模擬人類大腦的認知機制，透過「動態重要性」、「自動抽象化」與「分層歸檔」技術，讓 AI 具備真正的長期、具備深度推理背景的記憶能力。
-
----
-
-## 🧬 核心架構 (Core Architecture)
-
-### 1. 四層垂直記憶模型 (Tiered Memory)
-Cortex 採用 **四層垂直記憶模型**，確保系統在廣度與深度之間取得完美平衡：
-- **原始輸入層 (Raw Input / L2)**：記錄 100% 原始對話。防止摘要過程中遺失關鍵細節。
-- **事件記憶層 (Episodic Memory / L1)**：將數據處理為按時間排序的「事件摘要」，提供時間維度的檢索。
-- **事實知識層 (Fact Memory / Semantic)**：從事件中萃取出跨時間點的永久知識。
-- **抽象概念層 (Concept Memory)**：自動將多個事實關聯為更高層級的概念圖譜。
-
-### 2. 記憶縮放技術 (Memory Zooming: L0-L2)
-系統支持動態調整內容精細度：
-- **L0 (Summary)**: 僅提取核心意圖，適合極長跨度的背景注入。
-- **L1 (Key Points)**: 提取條列式要點，適合具體任務執行。
-- **L2 (Raw Content)**: 完整原始內容，適合需要精確複製或代碼生成的場景。
+在傳統開發中，當一個新的 AI Agent 加入專案時，它必須耗費大量 Token 去「重新朗讀」所有代碼與文檔。**Cortex 2.0 的設計用意是打破這種低效。**
+新 Agent 只需要接入 Cortex，就能直接繼承已經過「消化、總結、關聯」的 **專案事實 (Facts)**。我們不是在傳輸數據，而是在傳輸一個已經存在的「認知背景」。
 
 ---
 
-## 🔍 混合搜尋與導航 (Search Engine)
+## 🧠 第一章：認知分層與多級縮放 (Cognitive Layering & Zooming)
 
-### 1. 混合搜尋 (Hybrid RAG)
-Cortex 不僅僅依賴向量，它結合了兩種搜尋範式：
-- **全文檢索 (Elastic-like FTS)**：利用 PostgreSQL 的 `tsvector` 進行精確關鍵字匹配（如搜索特定的 UUID 或變數名）。
-- **向量餘弦相似度 (Vector Similarity)**：利用 `pgvector` 與 `BGE-M3` 模型進行語意關聯檢索。
-- **加權融合 (Weighted Fusion)**：自動平衡關鍵字精確度與語意模糊度。
+Cortex 採用 **四層垂直記憶模型**，模擬人類大腦從感官輸入到高度抽象的處理過程。
 
-### 2. 主動式背景掃描 (Proactive Scanning)
-系統在閒置時會自動運行「掃描探針」，模擬大腦的沉思過程：
-- **關連性發現**：主動尋找當前任務與數月前歷史背景的深層聯想。
-- **提示詞注入**：在 Agent 提問前，主動將「可能需要的背景」預加載至緩存中。
+### 1. 數據分層結構
+- **原始輸入 (Raw/L2)**: 儲存 100% 原始對話或代碼快照。
+- **事件摘要 (Episodic/L1)**: 將 Raw 轉化為時間軸上的具體事件（發生了什麼？）。
+- **結構事實 (Fact/Semantic)**: 從事件中萃取的去時間化知識（這代表了什麼？）。
+- **抽象概念 (Concept)**: 高維度的語意群集，實現非線性的知識聯想。
 
----
-
-## 🔮 神經排名與激活 (Neural Ranking)
-
-Cortex 決定「想起什麼」的邏輯由 **12 個權重指標** 組成：
-
-| 指標 | 權重 | 設計用意 |
-| :--- | :--- | :--- |
-| **語意相似度 (Similarity)** | 20% | 向量空間的對齊程度。 |
-| **新鮮度 (Recency)** | 12% | **艾賓浩斯衰減**：隨時間推移分數自然下降。 |
-| **核心重要性 (Importance)** | 14% | 優先處理用戶明確標註或系統判定的關鍵資訊。 |
-| **使用頻率 (Frequency)** | 8% | 反映該記憶在大腦中的活躍程度。 |
-| **強化反饋 (Reinforcement)** | 10% | 根據任務的成功次數增加記憶的「神經強度」。 |
-| **Token 效率 (Efficiency)** | 10% | 鼓勵 AI 檢索已被壓縮、更高密度的摘要。 |
-| **情感權重 (Emotion)** | 6% | 重視用戶情緒反應強烈的關鍵節點。 |
-| **新鮮感 (Novelty)** | 4% | 分散檢索結果，防止輸出的內容過於重複冗餘。 |
+### 2. 多級縮放 (Zoom Levels)
+系統支持在檢索時動態調整內容的「縮放深度」，確保 context 不會浪費：
+- **L0 (Summary)**: 5% 體積。適合了解專案全貌。
+- **L1 (Logic)**: 25% 體積。適合了解代碼邏輯。
+- **L2 (Raw)**: 100% 體積。適合需要精確複製或代碼生成的場景。
 
 ---
 
-## 💤 記憶生命週期管理 (Life-cycle)
+## 🕸️ 第二章：語意拓撲與知識圖譜 (Semantic Graph Topology)
 
-### 1. 睡眠週期與整理 (The Sleep Cycle)
-模擬人類睡眠時的記憶固化過程：
-- **智能去重 (Deduplication)**：當兩條記憶相似度 > 0.96 時，系統會自動合併它們，並累加重要性權重。
-- **衝突解決 (Conflict Resolution)**：當新事實與舊記憶衝突時，系統會建立 `SUPERSEDES` 連結，標註舊記憶為過時。
+Cortex 並非只是孤立的向量點，它是一個具有 **語意演繹能力** 的知識圖譜。
 
-### 2. 強化學習循環 (Reinforcement Learning)
-系統內建了 `Success Count` 機制。當某一條記憶被成功用於解決問題並獲得正向反饋時，該記憶的「神經通路」會被加厚，使其在未來的檢索中具備更高的權限。
+```mermaid
+graph TD
+    A["Fact: User prefers React"] -- SUPPORTS --> B["Decision: Use Next.js"]
+    C["Code: V1 API"] -- SUPERSEDES --> D["Code: V0 Legacy"]
+    E["Event: User Session"] -- PART_OF --> F["Concept: Frontend Stack"]
+    G["Fact: Deadline is May"] -- CONTRADICTS --> H["Proposed: June Launch"]
+```
 
----
-
-## 🛡️ 安全、隱私與性能 (Infrastructure)
-
-### 1. 在地化私有部署 (Privacy-First)
-- **Ollama 整合**：所有 Embedding 生成與事實萃取均可在本地運行（如使用 `bge-m3` 或 `llama3`），確保數據不流向雲端。
-- **多重人格隔離 (Multi-Persona)**：支持在同一數據庫中隔離不同 Agent 或 User 的記憶命名空間。
-
-### 2. 高性能索引 (pgvector Optimization)
-- 基於 PostgreSQL 的成熟生態，支持 `HNSW` (Hierarchical Navigable Small Worlds) 索引。
-- 無論是數千條還是數百萬條記憶，都能實現毫秒級的向量檢索。
+### 關鍵關係類型 (RelationType)
+- **`SUPPORTS`**: 驗證現有知識強度。
+- **`CONTRADICTS`**: 警示邏輯衝突，需人工介入或 AI 重新推理。
+- **`SUPERSEDES`**: 實現「版本化記憶」，自動隱藏過時的舊代碼。
+- **`PART_OF`**: 將細節歸納入主題 cluster。
 
 ---
 
-## 🔌 標準化接入 (Connectivity)
+## 🔮 第三章：神經排名指標詳解 (Neural Ranking Metric)
 
-### 1. MCP 協議支持
-系統完整支援 **Model Context Protocol (MCP)**。這意味著您的 Cortex 大腦可以無縫接入：
-- **Claude Desktop** / **VS Code (Cursor/Windsurf)**
-- 任何支持 MCP 的自動化 Agent 框架。
+系統如何決定「現在該想起什麼」？這由 **12 個維度的動態卷積分數** 決定。
 
-### 2. Agent-to-Brain 同步哲學
-這是我設計這個系統的最高綱領：讓新加入的 Agent 不需要花費數小時「朗讀」您的專案文件。它只需要連結到 Cortex，就能立即獲得「已經被消化過的專案事實」。
+| 指標 | 權重 | 設計用意 | 核心邏輯 |
+| :--- | :--- | :--- | :--- |
+| **語意相似度** | 20% | 相關性基礎 | 向量空間的餘弦相似度。 |
+| **新鮮度 (Recency)** | 12% | 艾賓浩斯衰減 | 隨時間推移分數指數級自然下降。 |
+| **核心重要性** | 14% | Salience 權重 | 區分專案規格 (L0) 與日常瑣事。 |
+| **Reinforcement** | 10% | 突觸增強 | 越高頻被回傳為正確答案，權重越高。 |
+| **Token Efficiency** | 10% | 認知成本優化 | 優先推薦已摘要、高密度的內容。 |
+| **Novelty** | 4% | 冗餘抑制 | 懲罰與已召回內容高度重複的節點。 |
 
 ---
 
-## 🚀 系統實機演示
+## 💤 第四章：睡眠週期與知識固化 (Sleep Cycle & Consolidation)
 
-### 1. 3D 神經知識圖譜
+Cortex 不間斷運行維護循環，確保大腦不會因為過多噪音而「宕機」。我們稱之為 **Sleep Cycle**。
+
+### 1. 智能去重 (Deduplication)
+當相似度 > 0.96 時，系統會視為同一記憶的重複出現，自動合併節點並疊加其重要性分數。
+
+### 2. 知識萃取流水線 (Fact Distillation)
+在背景進程中，LLM 會掃描 `EPISODIC` (事件) 記憶，自主判斷哪些經歷值得沉澱為永久的 `FACT` (事實)。
+
+---
+
+## 📉 第五章：艾賓浩斯衰減與神經修剪 (Neural Pruning)
+
+為了防止記憶爆炸，系統實施了殘酷的 **神經修剪機制**。
+
+### 衰減公式 (Math)
+$$S = e^{-\lambda \cdot t} \cdot (Importance + Boost)$$
+- 若重要性極低且長期未被訪問，分數會降至 `Prune Threshold` (0.05)。
+- 低於門檻的節點會變為 `FORGOTTEN` 狀態，釋放向量索引空間。
+
+---
+
+## 📈 第六章：強化學習與突觸塑性 (Reinforcement Feedback)
+
+每一條記憶都有一個 **Success Count (成功計數)**。
+- 當 Agent 在回覆中使用該記憶並得到正向反饋時，系統會調用 `reinforce()` 方法。
+- 這將永久性地調高該記憶的「基礎重要性」，使其在未來的類似場景中像「肌肉記憶」一樣被瞬間喚醒。
+
+---
+
+## 🛡️ 第七章：隱私安全與在地化架構 (Privacy-First Local Brain)
+
+Cortex 旨在成為一個「絕對私密」的大腦。
+
+- **硬體隔離**: 支援 Ollama `bge-m3` 在本地生成嵌入。
+- **空氣牆**: 所有事實萃取與概念群集均可離線完成。
+- **多重人格 (Namespacing)**: 為不同的任務或 User 建立獨立的記憶子空間，防止數據交叉感染。
+
+---
+
+## 🔌 第八章：MCP 跨代理協議橋接 (The MCP Bridge)
+
+Cortex 是 **Model Context Protocol (MCP)** 原生支持者。
+
+- **Standardized Access**: 任何支持 MCP 的 Client (如 Claude Desktop) 都能像訪問文件夾一樣訪問您的「記憶」。
+- **工具化調用**: Agent 可以通過 `recall_structured_memory` 或 `save_coding_memory` 直接操作大腦，無需編寫複雜代碼。
+
+---
+
+## 👁️ 第九章：主動式背景共鳴掃描 (Proactive Resonance)
+
+這不是被動的查字典。
+
+- 當系統檢測到新的 Input 時，**Proactive Scanner** 會在背景運行相似度預掃描。
+- 它會主動尋找與當前任務具有「隱性聯想」的非顯性記憶（例如三個月前的技術決策），並在 Agent 開始回覆前完成加載。
+
+---
+
+## 🚀 第十章：實機演示與視覺化 (Visualization)
+
+### 1. 3D 神經圖譜
 ![3D Neural Graph](assets/demo_3d_graph.png)
-*展示 **自動語意群集**。自動將記憶歸類為主題簇並建立連結。*
+*觀察數據的分簇現象，了解 Agent 的「知識版圖」。*
 
-### 2. 認知事件時間軸
+### 2. 事件時間軸
 ![Cognitive Timeline](assets/demo_timeline.png)
-*展示 **事件記憶流**。實現精準的「心理時間旅行」。*
+*實現跨時空的對話回溯與事件追蹤。*
 
-### 3. 開發編碼同步介面
+### 3. 開發編碼同步
 ![Coding Sync](assets/demo_coding_sync.png)
-*展示 **上下文感知開發**。針對代碼快照與需求的深度優先管理。*
-
----
-
-## 📬 未來展望 (Roadmap)
-- [x] **Agent-to-Brain 同步機制**：實現開箱即用的專家認知繼承。
-- [ ] **多模態記憶傳感**：支持圖片與音訊語意檢索。
-- [ ] **集體意識 (Collective Mind)**：安全地共享不同大腦間的非私密事實。
+*專為高效開發設計的「需求 vs 快照」對照介面。*
 
 ---
 *Developed with Passion for the Evolution of AI Cognition.*

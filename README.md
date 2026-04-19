@@ -5,118 +5,138 @@
 
 ---
 
-## 🌌 Design Philosophy
+## 🌌 The Mission: Cognitive Inheritance
 
-In traditional Agent systems, context window limitations often lead to "memory explosion" or the loss of critical background information.
-**Cortex Memory Engine** is designed to mimic human cognitive processes through "Dynamic Salience Ranking," "Autonomous Abstraction," and "Tiered Archiving." It provides AI agents with true long-term memory and deep reasoning capabilities without the overhead of massive raw logs.
-
----
-
-## 🧬 Core Architecture
-
-### 1. 4-Layer Vertical Memory Model
-Cortex implements a **4-layer vertical memory model** to balance breadth and depth of recall:
-- **Raw Input Layer (Verbatim / L2)**: Immutable logs of 100% raw conversations. Prevents loss of critical details (e.g., variable names).
-- **Episodic Memory Layer (Events / L1)**: Summarizes data into chronological "Event Streams" for temporal reasoning.
-- **Fact Memory Layer (Semantic)**: Extracts permanent, cross-session knowledge (e.g., "User prefers React").
-- **Concept Memory Layer (Abstraction)**: Associating multiple facts into high-level conceptual maps for non-linear intuition.
-
-### 2. Memory Zooming Logic (L0-L2)
-Supports dynamic granularity of context injection:
-- **L0 (Summary)**: Core intent only. Best for extremely long-span background injection.
-- **L1 (Key Points)**: Bulleted takeaways. Best for specific task execution.
-- **L2 (Raw Content)**: Verbatim data. Best for code generation or exact reproduction.
+In traditional development, when a new AI Agent joins a project, it must consume massive amounts of tokens to "re-read" all code and documentation. **Cortex 2.0 is designed to break this inefficiency.**
+New Agents simply connect to the Cortex and instantly inherit pre-digested **Project Facts**. We aren't just transmitting data; we are transmitting an existing "Cognitive Background."
 
 ---
 
-## 🔍 Hybrid Search & Navigation
+## 🧠 Chapter 1: Cognitive Layering & Multi-Level Zooming
 
-### 1. Hybrid RAG Architecture
-Cortex combines two powerful search paradigms:
-- **Full-Text Search (FTS)**: Utilizing PostgreSQL `tsvector` for exact keyword matching (UUIDs, specific function names).
-- **Vector Cosine Similarity**: Utilizing `pgvector` and `BGE-M3` for deep semantic association.
-- **Weighted Fusion**: Automatically balances keyword precision with semantic ambiguity.
+Cortex implements a **4-Layer Vertical Memory Model**, mimicking the human brain's progression from sensory input to high-level abstraction.
 
-### 2. Proactive Context Scanning
-The system runs "Scanning Probes" in the background to simulate human contemplation:
-- **Relevance Discovery**: Actively finding deep links between the current task and historical logs from months ago.
-- **Pre-emptive Injection**: Pre-loading "highly probable context" into the cache before the agent even asks.
+### 1. Data Layering Structure
+- **Raw Input (Verbatim/L2)**: Stores 100% raw conversation or code snippets. Prevents loss of subtle detail.
+- **Event Summary (Episodic/L1)**: Transforms Raw data into concrete events on a timeline ("What happened?").
+- **Structured Facts (Fact/Semantic)**: De-temporalized knowledge extracted from events ("What does this imply?").
+- **Abstract Concepts (Concept)**: High-dimensional semantic clusters enabling non-linear knowledge association.
 
----
-
-## 🔮 Neural Ranking & Activation
-
-The "Soul" of Cortex is governed by a **12-Dimension Scoring Algorithm**:
-
-| Metric | Weight | Design Rationale |
-| :--- | :--- | :--- |
-| **Similarity** | 20% | Vector space alignment with the current query. |
-| **Recency** | 12% | **Ebbinghaus Decay**: Natural score drop-off over time. |
-| **Importance** | 14% | Priority for core requirements over trivial logs. |
-| **Frequency** | 8% | Reflects how "Active" a memory is in the brain. |
-| **Reinforcement** | 10% | Increases "Neural Strength" based on task successes. |
-| **Token Efficiency** | 10% | Prioritizing high-density summaries to save LLM costs. |
-| **Emotion/Sentiment** | 6% | Prioritizing emotionally salient context. |
-| **Novelty** | 4% | Penalty for redundant info to ensure diverse retrieval. |
+### 2. Multi-Level Zooming
+The system dynamically scales content granularity to optimize context usage:
+- **L0 (Summary)**: 5% mass. Best for broad project overviews.
+- **L1 (Logic)**: 25% mass. Best for understanding code logic and flow.
+- **L2 (Raw Content)**: 100% mass. Best for exact code generation or reproduction.
 
 ---
 
-## 💤 Memory Lifecycle Management
+## 🕸️ Chapter 2: Semantic Topology & Knowledge Graph
 
-### 1. The Sleep Cycle
-Mimicking human neuroplasticity during rest:
-- **Intelligent Deduplication**: When similarity > 0.96, redundant memories are merged, accumulating importance weights.
-- **Conflict Resolution**: When new facts contradict old ones, a `SUPERSEDES` link is created, flagging outdated logs.
+Cortex is not just a collection of isolated vector points; it is a knowledge graph with **semantic deductive capabilities**.
 
-### 2. Reinforcement Learning Loop
-Built-in `Success Count` mechanism. When a memory is successfully used to solve a problem, its "Neural Path" is thickened, giving it higher retrieval priority in the future.
+```mermaid
+graph TD
+    A["Fact: User prefers React"] -- SUPPORTS --> B["Decision: Use Next.js"]
+    C["Code: V1 API"] -- SUPERSEDES --> D["Code: V0 Legacy"]
+    E["Event: User Session"] -- PART_OF --> F["Concept: Frontend Stack"]
+    G["Fact: Deadline is May"] -- CONTRADICTS --> H["Proposed: June Launch"]
+```
 
----
-
-## 🛡️ Privacy, Security & Performance
-
-### 1. Privacy-First Local Deployment
-- **Ollama Integration**: All embeddings and extractions run locally (e.g., `bge-m3` or `llama3`), ensuring zero data leakage to the cloud.
-- **Multi-Persona Isolation**: Securely segregating memory namespaces for different Agents or Users within the same DB.
-
-### 2. High-Performance Indexing (pgvector)
-- Mature PostgreSQL ecosystem supporting `HNSW` (Hierarchical Navigable Small Worlds) indexing.
-- Sub-millisecond vector retrieval across millions of memory nodes.
+### Key Relationship Types (RelationType)
+- **`SUPPORTS`**: Strengthens existing knowledge.
+- **`CONTRADICTS`**: Flags logical conflicts for human review or AI re-inference.
+- **`SUPERSEDES`**: Implements "Versioned Memory," automatically hiding legacy code/thoughts.
+- **`PART_OF`**: Clusters details into broader thematic entities.
 
 ---
 
-## 🔌 Standardized Connectivity
+## 🔮 Chapter 3: Neural Ranking Metric Deep-Dive
 
-### 1. MCP Protocol Support
-Full support for the **Model Context Protocol (MCP)**. Cortex can seamlessly connect to:
-- **Claude Desktop** / **VS Code (Cursor/Windsurf)**
-- Any AI framework supporting the MCP standard.
+How does the system decide "what to remember right now"? It is governed by a **12-dimensional dynamic convolution score**.
 
-### 2. Agent-to-Brain Sync Philosophy
-The core mission: New agents shouldn't spend hours "reading" your docs. They connect to the Cortex and immediately inherit "Digested Project Facts."
+| Metric | Weight | Design Intent | Core Logic |
+| :--- | :--- | :--- | :--- |
+| **Similarity** | 20% | Relevance Foundation | Cosine similarity in vector space. |
+| **Recency** | 12% | Ebbinghaus Decay | Natural exponential score drop over time. |
+| **Importance** | 14% | Salience Weighting | Priority for core specs (L0) over trivial logs. |
+| **Reinforcement** | 10% | Synaptic Strengthening | Higher usage frequency increases retrieval weight. |
+| **Token Efficiency** | 10% | Context Optimization | Prioritizing high-density, summarized nodes. |
+| **Novelty** | 4% | Redundancy Inhibition | Penalty for nodes highly similar to already retrieved items. |
 
 ---
 
-## 🚀 System Showcase
+## 💤 Chapter 4: Sleep Cycle & Knowledge Consolidation
 
-### 1. 3D Neural Knowledge Graph
+Cortex runs background maintenance loops to ensure the brain doesn't "crash" from excessive noise. We call this the **Sleep Cycle**.
+
+### 1. Intelligent Deduplication
+When similarity > 0.96, the system merges duplicate memories into a single node, accumulating their importance weights.
+
+### 2. Fact Distillation Pipeline
+During rest cycles, the system's LLM scans `EPISODIC` (Event) memories to autonomously decide which experiences should be distilled into permanent `FACT` nodes.
+
+---
+
+## 📉 Chapter 5: Ebbinghaus Decay & Neural Pruning
+
+To prevent memory explosion, Cortex implements a "pruning" mechanism.
+
+### Decay Formula
+$$S = e^{-\lambda \cdot t} \cdot (Importance + Boost)$$
+- Memories with low importance and zero recent access will naturally hit the `Prune Threshold` (0.05).
+- Nodes below this threshold transition to the `FORGOTTEN` state, freeing up vector index space.
+
+---
+
+## 📈 Chapter 6: Reinforcement & Synaptic Plasticity
+
+Every memory possesses a **Success Count**.
+- When an Agent utilizes a memory to successfully solve a problem (confirmed by positive feedback), the system triggers `reinforce()`.
+- This permanently increases the memory's "Basal Importance," allowing it to be recalled like "Muscle Memory" in the future.
+
+---
+
+## 🛡️ Chapter 7: Privacy-First Local Brain Architecture
+
+Cortex is designed to be an "Absolutely Private" brain.
+
+- **Hardware Isolation**: Native support for Ollama `bge-m3` local embedding generation.
+- **Air-Gap Capable**: All fact extraction and concept clustering can be performed offline.
+- **Multi-Persona (Namespacing)**: Segregated memory sub-spaces to prevent cross-contamination between different developers or users.
+
+---
+
+## 🔌 Chapter 8: The MCP Bridge Architecture
+
+Cortex is a native supporter of the **Model Context Protocol (MCP)**.
+
+- **Standardized Access**: Any MCP-capable client (e.g., Claude Desktop or Cursor) can access your "Brain" as easily as a local directory.
+- **Tool-Call Interface**: Agents can use tools like `recall_structured_memory` to directly operate the brain without complex code.
+
+---
+
+## 👁️ Chapter 9: Proactive Resonance Scanning
+
+This is not a passive dictionary look-up.
+
+- When new input is detected, the **Proactive Scanner** runs similarity pre-scans in the background.
+- It actively searches for "Implicit Associations"—old technical decisions or preferences that are non-obvious—and pre-loads them into the Agent's working memory before it even begins to reply.
+
+---
+
+## 🚀 Chapter 10: Real System Visualization
+
+### 1. 3D Neural Graph
 ![3D Neural Graph](assets/demo_3d_graph.png)
-*Demonstrating **Autonomous Semantic Clustering**. Visualizing how memory naturally groups into thematic hubs.*
+*Observe thematic clustering and the "Cognitive Map" of your project.*
 
-### 2. Cognitive Episodic Timeline
+### 2. Episodic Timeline
 ![Cognitive Timeline](assets/demo_timeline.png)
-*Visualizing the **Episodic Memory Stream**. Enabling precise "Mental Time Travel".*
+*Precise chronological event tracking and retrieval.*
 
 ### 3. Developer Coding Sync
 ![Coding Sync](assets/demo_coding_sync.png)
-*Demonstrating **Context-Aware Development**. Deep management of code snapshots and L0/L1 requirements.*
-
----
-
-## 📬 Roadmap
-- [x] **Agent-to-Brain Sync**: Out-of-the-box expert context inheritance.
-- [ ] **Multimodal Synthesis**: Storing and retrieving features from images and audio.
-- [ ] **Collective Mind**: Secure sharing of non-private facts across multiple brains.
+*Side-by-side management of L0 Requirements vs. Technical Snapshots.*
 
 ---
 *Developed with Passion for the Evolution of AI Cognition.*
