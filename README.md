@@ -12,7 +12,7 @@ New Agents simply connect to the Cortex and instantly inherit pre-digested **Pro
 
 ---
 
-## 🧠 Chapter 1: Cognitive Layering & Multi-Level Zooming
+## 🧠 Cognitive Layering & Multi-Level Zooming
 
 Cortex implements a **4-Layer Vertical Memory Model**, mimicking the human brain's progression from sensory input to high-level abstraction.
 
@@ -30,7 +30,7 @@ The system dynamically scales content granularity to optimize context usage:
 
 ---
 
-## 🕸️ Chapter 2: Semantic Topology & Knowledge Graph
+## 🕸️ Semantic Topology & Knowledge Graph
 
 Cortex is not just a collection of isolated vector points; it is a knowledge graph with **semantic deductive capabilities**.
 
@@ -50,7 +50,7 @@ graph TD
 
 ---
 
-## 🔮 Chapter 3: Neural Ranking Metric Deep-Dive
+## 🔮 Neural Ranking Metric Deep-Dive
 
 How does the system decide "what to remember right now"? It is governed by a **12-dimensional dynamic convolution score**.
 
@@ -65,7 +65,7 @@ How does the system decide "what to remember right now"? It is governed by a **1
 
 ---
 
-## 💤 Chapter 4: Sleep Cycle & Knowledge Consolidation
+## 💤 Sleep Cycle & Knowledge Consolidation
 
 Cortex runs background maintenance loops to ensure the brain doesn't "crash" from excessive noise. We call this the **Sleep Cycle**.
 
@@ -77,7 +77,7 @@ During rest cycles, the system's LLM scans `EPISODIC` (Event) memories to autono
 
 ---
 
-## 📉 Chapter 5: Ebbinghaus Decay & Neural Pruning
+## 📉 Ebbinghaus Decay & Neural Pruning
 
 To prevent memory explosion, Cortex implements a "pruning" mechanism.
 
@@ -88,7 +88,7 @@ $$S = e^{-\lambda \cdot t} \cdot (Importance + Boost)$$
 
 ---
 
-## 📈 Chapter 6: Reinforcement & Synaptic Plasticity
+## 📈 Reinforcement & Synaptic Plasticity
 
 Every memory possesses a **Success Count**.
 - When an Agent utilizes a memory to successfully solve a problem (confirmed by positive feedback), the system triggers `reinforce()`.
@@ -96,7 +96,7 @@ Every memory possesses a **Success Count**.
 
 ---
 
-## 🛡️ Chapter 7: Privacy-First Local Brain Architecture
+## 🛡️ Privacy-First Local Brain Architecture
 
 Cortex is designed to be an "Absolutely Private" brain.
 
@@ -106,7 +106,7 @@ Cortex is designed to be an "Absolutely Private" brain.
 
 ---
 
-## 🔌 Chapter 8: The MCP Bridge Architecture
+## 🔌 The MCP Bridge Architecture
 
 Cortex is a native supporter of the **Model Context Protocol (MCP)**.
 
@@ -115,7 +115,7 @@ Cortex is a native supporter of the **Model Context Protocol (MCP)**.
 
 ---
 
-## 👁️ Chapter 9: Proactive Resonance Scanning
+## 👁️ Proactive Resonance Scanning
 
 This is not a passive dictionary look-up.
 
@@ -124,7 +124,7 @@ This is not a passive dictionary look-up.
 
 ---
 
-## 🚀 Chapter 10: Real System Visualization
+## 🚀 Real System Visualization
 
 ### 1. 3D Neural Graph
 ![3D Neural Graph](assets/demo_3d_graph.png)
@@ -137,6 +137,42 @@ This is not a passive dictionary look-up.
 ### 3. Developer Coding Sync
 ![Coding Sync](assets/demo_coding_sync.png)
 *Side-by-side management of L0 Requirements vs. Technical Snapshots.*
+
+---
+
+## 🛠️ Zero-to-Hero: Quick Start
+
+### 1. Prerequisites (Fresh Machine Setup)
+- [Python 3.10+](https://www.python.org/)
+- [Git](https://git-scm.com/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Ollama](https://ollama.com/) (For local embeddings)
+
+### 2. Prepare Environment
+```bash
+# Clone the mind
+git clone https://github.com/lowkon123/AI-Cortex-Memory-System.git
+cd AI-Cortex-Memory-System
+
+# Setup Virtual Environment
+python -m venv venv
+.\venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 3. Launch Services
+```bash
+# Start Vector Database
+docker-compose up -d
+
+# Initialize Knowledge Base
+python scripts/init_db.py
+
+# Launch 3D Dashboard
+python dashboard.py
+```
 
 ---
 *Developed with Passion for the Evolution of AI Cognition.*
