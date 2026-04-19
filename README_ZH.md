@@ -1,4 +1,4 @@
-# 🧠 Cortex Memory Engine 2.0
+# 🧠 Cortex Memory Engine
 > **非線性分層記憶引擎：為強 AI Agent 打造的「長效數位大腦」**
 
 [中文版 (Chinese)](README_ZH.md) | [English](README.md)

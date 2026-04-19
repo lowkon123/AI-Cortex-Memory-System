@@ -1,4 +1,4 @@
-# 🧠 Cortex Memory Engine 2.0
+# 🧠 Cortex Memory Engine
 > **Non-Linear Hierarchical Memory Engine: A Persistent Digital Brain for Sophisticated AI Agents**
 
 [中文版 (Chinese)](README_ZH.md) | [English](README.md)
