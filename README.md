@@ -1,8 +1,9 @@
 # 🧠 Cortex Memory Engine: The Cognitive Core for AI Agents
 
+[**繁體中文版 README**](README_ZH.md)
+
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/lowkon123/AI-Cortex-Memory-System/blob/main/LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Cortex 2.0](https://img.shields.io/badge/Version-2.0%20Cognitive-orange.svg)]()
 
 > "Cortex is not a database. It is a cognitive layer that gives AI agents a sense of time, continuity, and structured knowledge."
 
@@ -10,9 +11,9 @@ Cortex Memory Engine is a high-performance, hierarchical memory system designed 
 
 ---
 
-## 🚀 Key Highlights (Cortex 2.0 Upgrade)
+## 🚀 Key Highlights
 
-- **[屌!!!] Autonomous Fact Extraction**: Automatically distills raw conversation into structured, durable facts.
+- **Autonomous Fact Extraction**: Automatically distills raw conversation into structured, durable facts.
 - **Hierarchical Cognitive Stack**: Multi-layer memory (Raw -> Episode -> Fact -> Concept) for extreme token efficiency.
 - **Semantic Knowledge Graph**: Native relationship tracking (`supports`, `contradicts`, `causes`) for logical reasoning.
 - **Hybrid Retrieval Engine**: Blazing fast Full-Text Search (FTS) combined with Vector Cosine Similarity.
