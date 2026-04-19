@@ -1,103 +1,171 @@
-# Cortex Memory Engine 🧠 [Awesome!!!]
+# 🧠 Cortex Memory Engine: The Cognitive Core for AI Agents
 
-[繁體中文版](./README_ZH.md)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/lowkon123/AI-Cortex-Memory-System/blob/main/LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Cortex 2.0](https://img.shields.io/badge/Version-2.0%20Cognitive-orange.svg)]()
 
-> **"Not just document storage, but memory for thinking systems. Modeled after human cognition with native forgetting and consolidation."**
+> "Cortex is not a database. It is a cognitive layer that gives AI agents a sense of time, continuity, and structured knowledge."
 
-Cortex is a **dynamic cognitive memory layer** designed for AI agents. It eliminates the limitations of static RAG and context-window bloat by treating memory as a living process.
+Cortex Memory Engine is a high-performance, hierarchical memory system designed to solve the "LLM amnesia" problem. By mimicking human cognitive patterns, it allows agents to store, recall, and self-organize information across sessions without exploding the token context.
 
 ---
 
-## ⚡ Why Cortex? (Vs. Traditional Vector DBs)
+## 🚀 Key Highlights (Cortex 2.0 Upgrade)
 
-| Feature | Trad. Vector DB / RAG | Cortex Memory Engine |
+- **[屌!!!] Autonomous Fact Extraction**: Automatically distills raw conversation into structured, durable facts.
+- **Hierarchical Cognitive Stack**: Multi-layer memory (Raw -> Episode -> Fact -> Concept) for extreme token efficiency.
+- **Semantic Knowledge Graph**: Native relationship tracking (`supports`, `contradicts`, `causes`) for logical reasoning.
+- **Hybrid Retrieval Engine**: Blazing fast Full-Text Search (FTS) combined with Vector Cosine Similarity.
+- **3D Interactive Dashboard**: Real-time visualization of your agent's mind through 3D clusters and emotional polarity.
+
+---
+
+## 🏗️ The Cognitive Stack (Architecture)
+
+Traditional vector databases treat all text equally. Cortex uses a **4-Layer Cognitive Hierarchy**:
+
+```mermaid
+graph TD
+    A[Raw Input] -->|Processing| B[Episode Memory]
+    B -->|Abstraction| C[Fact Memory]
+    C -->|Clustering| D[Concept Memory]
+    
+    subgraph "Short-Term/Working"
+    A
+    B
+    end
+    
+    subgraph "Long-Term/Semantic"
+    C
+    D
+    end
+```
+
+1.  **Raw Input**: Verbatim logs of the interaction.
+2.  **Episode Memory**: Temporal-based events summarizing "what happened" today.
+3.  **Fact Memory**: Structural knowledge about the user or project (e.g., "User prefers React").
+4.  **Concept Memory**: High-level abstract Terminology and entity clusters.
+
+---
+
+## 🕸️ Knowledge Graph & Semantic Linking
+
+Cortex doesn't just find "similar" text; it understands **relationships**. When memories are stored, Cortex builds directed edges:
+- **`SUPPORTS`**: Validates existing knowledge.
+- **`CONTRADICTS`**: Flags conflicting information for human review.
+- **`PART_OF`**: Links specific details to broader episodes.
+
+---
+
+## 🔍 Hybrid Cognitive Retrieval
+
+Stop choosing between "Exact Match" and "Fuzzy Search". Cortex uses a unified scoring algorithm:
+
+| Factor | Weight | Description |
 | :--- | :--- | :--- |
-| **Retrieval Logic** | Purely Semantic Similarity (Cosine) | **Multi-factor Activation Score** (Similarity + Recency + Heat + Importance) |
-| **Data State** | Static & Permanent | **Dynamic Flow** (Forgets, Compresses, and Reinforces) |
-| **Context Cost** | Linear growth, prone to bloat | **Ultra-Efficient** (Auto-summarization, detailed on-demand) |
-| **Background Ops** | None | **Sleep Cycle** (Background consolidation and garbage collection) |
-| **Evolution** | Passive | **Proactive Scoring** (Self-improves based on agent feedback) |
+| **Vector Similarity** | 20% | Semantic "meaning" overlap. |
+| **Recency** | 12% | Boost for recent events. |
+| **Importance** | 14% | Manual or AI-assigned significance. |
+| **Token Efficiency** | 10% | Prefers concise summaries over bloated raw text. |
+| **Novelty** | 4% | Penalty for redundant information in the same context. |
 
 ---
 
-## 🏗 Core Architecture: The Memory Lifecycle
+## 📊 3D Awareness Dashboard
 
-In Cortex, every memory is a node with its own "metabolism":
-
-### 1. The Memory Hierarchy (Tier)
-- **L0 - Sensory**: Immediate session-specific context.
-- **L1 - Episodic**: Recent technical decisions and temporary project requirements.
-- **L2 - Semantic**: Consolidated knowledge nodes and core user preferences.
-
-### 2. The Data Model: Inside a Memory Node [Awesome!!!]
-| Property | Description | Impact |
-| :--- | :--- | :--- |
-| **Importance** | Core value (0-1) | Determines if a memory is locked or eligible for forgetting. |
-| **Confidence** | Reliability score | Influences the weight of the memory in AI decision-making. |
-| **Emotional Weight** | Intensity score | Automatically adjusted to simulate "Flashbulb Memories." |
-| **Access Count** | Usage frequency | Increases every time the memory is successfully recalled. |
-| **Activation Score** | **Current Vitality** | Determines if the memory "surfaces" to the AI at this moment. |
+Visualize your agent's thought process in a real-time 3D environment.
+- **Cluster Visualization**: See how segments of memory naturally group by topic.
+- **Emotional Polarity**: Color-coded nodes reflecting the sentiment (positive/negative) of the memory.
+- **Live Interaction**: Edit, delete, or manually link memories directly from the UI.
 
 ---
 
-## 🚀 Quick Start (Zero to Hero)
+## 💤 Autonomous Memory Lifecycle (The Sleep Cycle)
 
-Launch your production-ready memory system in minutes:
+Memories are not static. Cortex performs autonomous maintenance during "Sleep":
+- **Deduplication**: Merges highly similar memories to save token space.
+- **Neural Decay**: Importance of trivial information fades over time to preserve "clean" recall.
+- **Consolidation**: Moving frequent episodic patterns into permanent Facts.
 
-### 1. Prerequisites
-- [Python 3.10+](https://www.python.org/downloads/) / [Git](https://git-scm.com/downloads)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) / [Ollama](https://ollama.com/download)
+---
 
-### 2. Environment Setup
+## 🛠️ Zero-to-Hero: Quick Start
+
+### 1. Prerequisites (Fresh Machine Setup)
+- [Python 3.10+](https://www.python.org/)
+- [Git](https://git-scm.com/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Ollama](https://ollama.com/) (For local embeddings)
+
+### 2. Prepare Environment
 ```bash
+# Clone the mind
 git clone https://github.com/lowkon123/AI-Cortex-Memory-System.git
 cd AI-Cortex-Memory-System
+
+# Setup Virtual Environment
 python -m venv venv
 .\venv\Scripts\activate
+
+# Install Dependencies
 pip install -r requirements.txt
+```
+
+### 3. Launch Services
+```bash
+# 1. Pull the embedding model
 ollama pull bge-m3
-```
 
-### 3. Launch
-1. **DB**: `docker compose up -d`
-2. **Auto-Launch** (Windows): Double-click `launch_services.bat`.
-   - **3D Dashboard**: `http://localhost:8000`
-   - **Memory API**: `http://localhost:8002`
+# 2. Start PostgreSQL/pgvector
+docker-compose up -d
 
----
-
-## 🔌 API Reference: Developer Core
-
-| Type | Endpoint | Description |
-| :--- | :--- | :--- |
-| **Agent Link** | `POST /agent/context` | **Most Used!** Get formatted prompt context directly. |
-| **Store** | `POST /agent/store` | Persist technical decisions, requirements, or results. |
-| **Refine** | `POST /agent/reinforce` | Strengthen a memory node based on its utility. |
-| **Analytics** | `GET /search/stats` | View health and distribution stats of the memory pool. |
-
-### Python Integration:
-```python
-from api.client import MemoryClient
-client = MemoryClient("http://localhost:8002", persona="antigravity")
-
-# 1. Build context for a prompt
-context = client.build_context("How to optimize DB?", limit=5)
-
-# 2. Store a new architectural decision
-client.agent_store(content="We decided to use pgvector for indexing.", tags=["db", "opt"])
+# 3. Launch Everything (Windows)
+.\launch_services.bat
 ```
 
 ---
 
-## 📊 Visualization & Interaction
-*   **3D Graph Dashboard (dashboard.py)**: Real-time visualization of memory clusters and semantic relationships.
-*   **Cognitive Chat Demo (chat.py)**: A standalone playground to test recall and reinforcement logic.
+## 🔌 MCP Native Support (Claude/Cursor)
+
+Cortex is fully compatible with the **Model Context Protocol (MCP)**. You can add it as a tool to **Claude Desktop** or **Cursor**:
+
+**Config Example (`.mcp.json`):**
+```json
+{
+  "mcpServers": {
+    "cortex": {
+      "command": "python",
+      "args": ["d:/path/to/cortex_mcp_server.py"]
+    }
+  }
+}
+```
 
 ---
 
-## 🔧 AI Agent Standard
-We have designed specific guidelines for AI Agents using this system.
-👉 [**CORTEX_AI_INSTRUCTIONS.md (Mandatory)**](./CORTEX_AI_INSTRUCTIONS.md)
+## 🤖 Integration for Custom Agents
+
+### The 3-Endpoint Pattern
+Integrate Cortex into any AI loop using three simple HTTP calls:
+
+1.  **`POST /agent/context`**: Get relevance-ranked context for your next prompt.
+2.  **`POST /agent/store`**: Save the current turn or interesting project findings.
+3.  **`POST /agent/reinforce`**: Tell Cortex which memories helped the most.
 
 ---
-*Cortex Memory Engine - Not just storage. Giving AI a soul.*
+
+## 🗺️ Roadmap
+
+- [ ] **Multimodal Memory**: Support for images and diagram embeddings.
+- [ ] **Distributed Cortex**: Syncing memories across multiple local machines.
+- [ ] **Proactive Recall**: Allow agents to "dream" and notice connections autonomously.
+- [ ] **Temporal Graph**: Visualizing how knowledge evolved over months.
+
+---
+
+## 📜 License & Contributing
+
+Cortex is licensed under the MIT License. Contributions are welcome to build the future of AI cognitive science.
+
+---
+**Cortex Memory System - Give your AI a brain.**
