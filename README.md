@@ -2,84 +2,89 @@
 
 [繁體中文版](./README_ZH.md)
 
-A local AI memory system designed to feel closer to human memory than a plain note store or vector database.
+> **"It's not just document storage; it's memory for thinking systems."**
 
-Instead of treating memory as static documents, Cortex Memory Engine treats memory as something that can be formed, compressed, recalled, reinforced, consolidated, and forgotten.
-
-The goal is simple: `maximize useful recall while minimizing prompt/context cost`
-
-## 🚀 Quick Start (Zero to Hero)
-
-This is a complete installation process for a fresh system:
-
-### 1. Prerequisites
-Ensure you have the following installed:
-- [Python 3.10+](https://www.python.org/downloads/)
-- [Git](https://git-scm.com/downloads)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (For the database)
-- [Ollama](https://ollama.com/download) (For local AI models)
-
-### 2. Environment Setup
-Open your Terminal or PowerShell and run:
-
-```bash
-# 1. Clone the project
-git clone https://github.com/lowkon123/AI-Cortex-Memory-System.git
-cd AI-Cortex-Memory-System
-
-# 2. Setup virtual environment (Recommended)
-python -m venv venv
-# Windows:
-.\venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Pull the embedding model (Crucial)
-ollama pull bge-m3
-```
-
-### 3. Launch Services
-1.  **Start Database**: Ensure Docker is running, then run:
-    ```bash
-    docker compose up -d
-    ```
-2.  **Launch System** (Windows):
-    Simply double-click `launch_services.bat`.
-    
-    *Or manually (All Platforms):*
-    - API: `python -m uvicorn api.main:app --port 8002`
-    - Dashboard: `python dashboard.py`
-
-### 4. Verification
-- **3D Dashboard**: Visit `http://localhost:8000`
-- **API Status**: Visit `http://localhost:8002/health`. If it shows `status: healthy`, you are all set!
+Cortex Memory Engine is a local, long-term memory layer designed for AI agents. It goes beyond simple vector search by modeling memory like a living organism—formed, compressed, recalled, reinforced, and forgotten.
 
 ---
 
-## 🏗 Main Components
+## 🧠 Core Philosophy: Why Cortex?
 
-### Dashboard
+Traditional RAG and vector databases treat memory as static data. Cortex treats memory as a **dynamic cognitive process**:
+
+### 1. Hierarchical Architecture (L0 / L1 / L2)
+- **L0 (Sensory)**: Immediate conversation context.
+- **L1 (Short-term)**: Recent technical decisions and temporary requirements.
+- **L2 (Long-term)**: Consolidated architectural patterns and core user preferences.
+
+### 2. Dynamic Activation & Recall
+In Cortex, **Similarity != Usefulness**. We use a multi-factor **Activation Score**:
+`Recall Score = Semantic Similarity + Importance Weight + Access Frequency + Emotional Weight - Time Decay`
+This ensures your AI recalls what actually matters, not just what sounds similar.
+
+### 3. Native Forgetting & Consolidation
+- **Forgetting Mechanism**: Obsolete or weak memories naturally fade away to prevent "Context Explosion" and keep your AI focused.
+- **Sleep Cycle (Consolidation)**: During idle time, the system automatically runs a background cycle to summarize fragmented logs into high-density semantic nodes.
+
+### 4. Extreme Token Efficiency
+Cortex follows a "Summary First, Details on Demand" strategy. Agents retrieve high-value summaries by default, only expanding into raw data when a deep dive is required. This maximizes utility while minimizing LLM costs.
+
+---
+
+## 🚀 Quick Start (Zero to Hero)
+
+Set up your production-ready memory system in minutes, even on a fresh machine:
+
+### 1. Prerequisites
+- [Python 3.10+](https://www.python.org/downloads/)
+- [Git](https://git-scm.com/downloads)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (For the DB)
+- [Ollama](https://ollama.com/download) (For local embeddings)
+
+### 2. Environment Setup
+```bash
+# 1. Clone & Enter
+git clone https://github.com/lowkon123/AI-Cortex-Memory-System.git
+cd AI-Cortex-Memory-System
+
+# 2. Virtual Env
+python -m venv venv
+# Windows:
+.\venv\Scripts\activate
+
+# 3. Install & Model
+pip install -r requirements.txt
+ollama pull bge-m3
+```
+
+### 3. Launch
+1.  **DB**: `docker compose up -d`
+2.  **All-in-One** (Windows): Double-click `launch_services.bat`.
+3.  **Manual**: Open `http://localhost:8000` for the dashboard.
+
+---
+
+## 🏗 Key Components
+
+### 📊 3D Memory Dashboard
 - File: [dashboard.py](dashboard.py)
-- Visual 3D memory graph with detail panels and stats.
+- **3D Memory Graph**: Visualize clusters and relationships between memory nodes in real-time.
+- **Interactive Inspection**: Double-click any node to see its activation score and history.
 
-### Chat Demo
+### 💬 Cognitive Chat Demo
 - File: [chat.py](chat.py)
-- Interactive demo with semantic recall and reinforcement.
+- A live showcase of AI performing "Recall before Generation" and "Reinforcement after Action."
 
-### Reusable API
-- Folder: [api](api)
-- REST interface for external AI integrations.
+### 🔌 Universal API & MCP Server
+- Folder: [api](api) / [cortex_mcp_server.py](cortex_mcp_server.py)
+- Seamlessly plug Cortex into Claude Code, Cursor, or your custom agents.
 
 ---
 
 ## 🔧 Integration Pattern
+Simple REST loop for any AI agent:
+1. `POST /agent/context` (Get dynamic background)
+2. Append background to LLM prompt.
+3. `POST /agent/store` (Commit decision/result)
 
-Any external AI can use Cortex with this loop:
-1. `POST /agent/context` (Find background)
-2. Call your LLM with the context.
-3. `POST /agent/store` (Save new outcomes)
-
-Reference: [CORTEX_AI_INSTRUCTIONS.md](./CORTEX_AI_INSTRUCTIONS.md)
+Detailed Guidelines: [CORTEX_AI_INSTRUCTIONS.md](./CORTEX_AI_INSTRUCTIONS.md)
