@@ -1,7 +1,7 @@
 # Cortex AI Memory System - 跨平台串接指南
 
 ## 1. 核心資訊
-- **MCP Server 路徑**: `d:/Projects/Antigravity/AI_mem_system/cortex_mcp_server.py`
+- **MCP Server 路徑**: `./cortex_mcp_server.py` (或是您的絕對路徑)
 - **API 埠號**: 8002
 - **Dashboard**: `http://localhost:8000`
 
@@ -12,7 +12,7 @@
   "mcpServers": {
     "cortex-memory": {
       "command": "python",
-      "args": ["d:/Projects/Antigravity/AI_mem_system/cortex_mcp_server.py"],
+      "args": ["/絕對路徑/到/cortex_mcp_server.py"],
       "env": { "PYTHONIOENCODING": "utf-8" }
     }
   }
@@ -22,7 +22,7 @@
 ## 3. 串接 Codex / Cursor
 在 MCP Settings 頁面新增：
 - **Name**: `Cortex`
-- **Command**: `python d:/Projects/Antigravity/AI_mem_system/cortex_mcp_server.py`
+- **Command**: `python [絕對路徑]/cortex_mcp_server.py`
 
 ## 4. 常用連動指令
 - "請從 Cortex 召回與 [主題] 相關的背景。"

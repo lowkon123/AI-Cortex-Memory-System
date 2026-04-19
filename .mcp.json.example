@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "cortex-memory": {
+      "command": "python",
+      "args": ["YOUR_ABSOLUTE_PATH_TO/cortex_mcp_server.py"],
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}

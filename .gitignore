@@ -8,6 +8,7 @@ data/
 *.env
 .vscode/
 .idea/
+.claude/
 
 # Testing
 .pytest_cache/
@@ -20,6 +21,7 @@ coverage.xml
 scratch/
 temp/
 *.tmp
+.mcp.json
 
 # OS files
 .DS_Store

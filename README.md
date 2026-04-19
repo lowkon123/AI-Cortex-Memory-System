@@ -46,26 +46,26 @@ This means it can act as:
 
 ### Dashboard
 
-- File: [dashboard.py](/d:/Projects/Antigravity/AI_mem_system/dashboard.py)
+- File: [dashboard.py](dashboard.py)
 - Visual 3D memory graph
 - Memory detail panel
 - Stats and timeline views
 
 ### Chat Demo
 
-- File: [chat.py](/d:/Projects/Antigravity/AI_mem_system/chat.py)
+- File: [chat.py](chat.py)
 - Uses memory recall before generation
 - Stores dialogue back into memory after the turn
 - Reinforces recalled memories after successful use
 
 ### Reusable API
 
-- Folder: [api](/d:/Projects/Antigravity/AI_mem_system/api)
+- Folder: [api](api)
 - Exposes memory CRUD, search, and AI-facing integration endpoints
 
 ### Memory Core
 
-- Folder: [src](/d:/Projects/Antigravity/AI_mem_system/src)
+- Folder: [src](src)
 - Data model, ranking, context building, forgetting, feedback, graph recall, and sleep-cycle logic
 
 ## Key Features
@@ -89,7 +89,7 @@ Typical defaults:
 
 If `8000` is already occupied or you need a clean dashboard instance:
 
-- [run_dashboard_8001.py](/d:/Projects/Antigravity/AI_mem_system/run_dashboard_8001.py)
+- [run_dashboard_8001.py](run_dashboard_8001.py)
 - Dashboard alt port: `http://127.0.0.1:8001`
 
 ## Run The Dashboard
@@ -214,9 +214,9 @@ This project is now shaped to be usable by:
 
 Reference examples:
 
-- [api/examples/python_agent_example.py](/d:/Projects/Antigravity/AI_mem_system/api/examples/python_agent_example.py)
-- [api/examples/openwebui_memory_tool.py](/d:/Projects/Antigravity/AI_mem_system/api/examples/openwebui_memory_tool.py)
-- [api/examples/cli_memory_wrapper.py](/d:/Projects/Antigravity/AI_mem_system/api/examples/cli_memory_wrapper.py)
+- [api/examples/python_agent_example.py](api/examples/python_agent_example.py)
+- [api/examples/openwebui_memory_tool.py](api/examples/openwebui_memory_tool.py)
+- [api/examples/cli_memory_wrapper.py](api/examples/cli_memory_wrapper.py)
 
 ## Data Model Highlights
 
