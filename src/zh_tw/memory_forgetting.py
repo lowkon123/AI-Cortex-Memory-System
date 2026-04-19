@@ -22,15 +22,20 @@ class MemoryForgetting:
         self.stale_days = stale_days
 
     def apply_decay(self, memory: MemoryNode) -> MemoryNode:
-        memory.importance_boost *= self.decay_factor
+        # Structured facts and concepts decay much slower (L2 Long-term)
+        decay_rate = self.decay_factor
+        if memory.memory_kind in (MemoryKind.FACT, MemoryKind.CONCEPT):
+            decay_rate = 0.99  # Very stable
+        
+        memory.importance_boost *= decay_rate
         if memory.importance_boost < 0.01:
             memory.importance_boost = 0.0
 
-        memory.importance = max(0.08, memory.importance * 0.997)
+        memory.importance = max(0.08, memory.importance * (0.999 if memory.memory_kind == MemoryKind.FACT else 0.997))
         memory.emotional_weight = max(0.0, memory.emotional_weight * 0.995)
         memory.activation_score = max(
             0.0,
-            memory.activation_score * self.decay_factor,
+            memory.activation_score * decay_rate,
         )
         memory.updated_at = utc_now()
         return memory
@@ -48,7 +53,12 @@ class MemoryForgetting:
         now = now or datetime.now(UTC)
         if now.tzinfo is None:
             now = now.replace(tzinfo=UTC)
-        cutoff = now - timedelta(days=self.stale_days)
+            
+        # Support TTL (Time-To-Live) from metadata
+        ttl_days = memory.metadata.get("ttl_days")
+        effective_stale_days = ttl_days if ttl_days is not None else self.stale_days
+        
+        cutoff = now - timedelta(days=effective_stale_days)
         last_touch = (
             memory.last_reinforced
             or memory.last_accessed

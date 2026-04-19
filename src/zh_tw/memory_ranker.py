@@ -15,16 +15,18 @@ class MemoryRanker:
     """Score memories using similarity plus cognitive activation signals."""
 
     DEFAULT_WEIGHTS = {
-        "similarity": 0.22,
-        "recency": 0.14,
-        "importance": 0.15,
-        "frequency": 0.10,
-        "reinforcement": 0.12,
-        "emotion": 0.08,
-        "confidence": 0.08,
-        "persona": 0.05,
+        "similarity": 0.20,
+        "recency": 0.12,
+        "importance": 0.14,
+        "frequency": 0.08,
+        "reinforcement": 0.10,
+        "emotion": 0.06,
+        "confidence": 0.06,
+        "persona": 0.04,
         "concept": 0.04,
         "kind": 0.02,
+        "token_efficiency": 0.10,  # Maximize information density
+        "novelty": 0.04,  # Penalty for redundant memories
     }
 
     KIND_PRIOR = {
@@ -80,6 +82,8 @@ class MemoryRanker:
             "persona": self._score_persona(memory, persona),
             "concept": self._score_concepts(memory, query_tags),
             "kind": self._score_kind(memory, desired_kinds),
+            "token_efficiency": self._score_token_efficiency(memory),
+            "novelty": 1.0,  # Default to 1.0, will be adjusted in rank_memories
         }
 
         score = sum(self.weights[name] * value for name, value in components.items())
@@ -110,6 +114,9 @@ class MemoryRanker:
         desired_kinds: Optional[list[MemoryKind]] = None,
     ) -> list[tuple[MemoryNode, float]]:
         now = datetime.now(UTC)
+        final_list = []
+        
+        # Initial ranking
         scored = []
         for memory in memories:
             score = self.score_memory(
@@ -122,7 +129,35 @@ class MemoryRanker:
             )
             scored.append((memory, score))
         scored.sort(key=lambda item: item[1], reverse=True)
-        return scored[:limit]
+
+        # Apply Novelvy Penalty (Iterative Selection)
+        selected_nodes = []
+        for memory, score in scored:
+            # Calculate novelty based on similarity to already selected nodes
+            novelty = 1.0
+            for existing in selected_nodes:
+                sim = self._score_similarity(memory, existing.embedding)
+                if sim > 0.85:  # Highly redundant
+                    novelty *= 0.5
+                elif sim > 0.7:  # Somewhat redundant
+                    novelty *= 0.8
+            
+            pensed_score = score * (1.0 - self.weights["novelty"] + (self.weights["novelty"] * novelty))
+            final_list.append((memory, pensed_score))
+            selected_nodes.append(memory)
+            if len(selected_nodes) >= limit:
+                break
+                
+        final_list.sort(key=lambda item: item[1], reverse=True)
+        return final_list[:limit]
+
+    def _score_token_efficiency(self, memory: MemoryNode) -> float:
+        """Maximize information density. Summaries get higher scores than raw content."""
+        length = len(memory.content)
+        if length < 10:
+            return 0.1
+        # Inverse logarithmic scaling: shorter (more concise) is better for basic retrieval
+        return float(max(0.0, min(1.0, 1.0 - (math.log(length) / 10))))
 
     def _score_similarity(
         self, memory: MemoryNode, query_vector: Optional[list[float]]

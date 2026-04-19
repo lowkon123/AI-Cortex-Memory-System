@@ -232,3 +232,59 @@ class MemoryIndex:
                 """,
                 memory_id,
             )
+    async def hybrid_search(
+        self, query: str, query_vector: list[float], limit: int = 20
+    ) -> list[UUID]:
+        """執行混合搜尋 (關鍵字過濾 + 向量相似度)。
+
+        Args:
+            query: 搜尋關鍵字。
+            query_vector: 查詢向量。
+            limit: 結果數量上限。
+
+        Returns:
+            相關記憶 ID 列表。
+        """
+        async with self._pool.acquire() as conn:
+            # 結合 FTS (Full Text Search) 與向量餘弦相似度
+            rows = await conn.fetch(
+                f"""
+                WITH keyword_matches AS (
+                    SELECT id, 0.3 as keyword_score
+                    FROM memories
+                    WHERE to_tsvector('simple', content) @@ plainto_tsquery('simple', $1)
+                )
+                SELECT m.id, 
+                       (1 - (m.embedding <=> $2)) as vector_score,
+                       COALESCE(k.keyword_score, 0) as k_score
+                FROM memories m
+                LEFT JOIN keyword_matches k ON m.id = k.id
+                WHERE m.status = 'active'
+                ORDER BY (vector_score + k_score) DESC
+                LIMIT $3
+                """,
+                query,
+                str(query_vector),
+                limit,
+            )
+            return [row["id"] for row in rows]
+
+    async def get_neighbor_ids(self, memory_ids: list[UUID], limit: int = 10) -> list[UUID]:
+        """擴展檢索：尋找與指定節點有連結的鄰居節點。"""
+        if not memory_ids:
+            return []
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT DISTINCT CASE 
+                    WHEN source_id = ANY($1) THEN target_id 
+                    ELSE source_id 
+                END as neighbor_id
+                FROM memory_relations
+                WHERE source_id = ANY($1) OR target_id = ANY($1)
+                LIMIT $2
+                """,
+                memory_ids,
+                limit,
+            )
+            return [row["neighbor_id"] for row in rows]

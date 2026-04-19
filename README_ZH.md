@@ -1,180 +1,97 @@
-# 🧠 Cortex Memory Engine: AI Agent 的認知核心
+# 🧠 Cortex Memory Engine 2.0
+> **非線性分層記憶引擎：為強 AI Agent 打造的「長效數位大腦」**
 
-[**English Version README**](README.md)
-
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/lowkon123/AI-Cortex-Memory-System/blob/main/LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-
-> 「Cortex 不是一個資料庫。它是賦予 AI Agent 時間感、連續性與結構化知識的認知層。」
-
-Cortex Memory Engine 是一個高性能的層級式記憶系統，專為解決「LLM 健忘症」而設計。透過模擬人類的認知模式，它讓 AI 能在不爆炸 Token Context 的情況下，跨 Session 儲存、回想並自主整理資訊。
+[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![pgvector](https://img.shields.io/badge/Vector-pgvector-FF6F61?style=for-the-badge)](https://github.com/pgvector/pgvector)
+[![FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 
 ---
 
-## 🚀 [屌!!!] 核心特性
+## 🌌 設計初衷 (Design Philosophy)
 
-- **自主事實萃取 (Fact Extraction)**：自動將瑣碎的對話提煉為結構化的持久事實。
-- **層級認知堆棧 (Hierarchical Stack)**：四層記憶架構 (原始 -> 情節 -> 事實 -> 概念)，極大化 Token 使用效率。
-- **語意知識圖譜 (Knowledge Graph)**：原生支持關係追蹤 (`supports`, `contradicts`, `causes`)。
-- **混合搜尋引擎 (Hybrid Engine)**：結合全文檢索 (FTS) 與向量相似度 (Vector Similarity) 的強大檢索速度。
-- **3D 互動儀表板**：透過 3D 群集與情緒極性即時視覺化 AI 的「思維」。
+在傳統的 Agent 系統中，上下文 (Context) 往往隨著對話增長而「爆炸」，導致記憶遺忘或 LLM 處理成本飆升。
+**Cortex Memory Engine** 的誕生，是為了模擬人類大腦的認知機制，透過「動態重要性」、「自動抽象化」與「分層歸檔」技術，讓 AI 具備真正的長期、具備深度推理背景的記憶能力。
 
 ---
 
-## 🎨 實機畫面展示 (Visual Showcase)
+## 🧬 認知結構 (Cognitive Architecture)
 
-| 3D 知識圖譜 | 記憶編輯面板 | 認知數據分析 |
-| :---: | :---: | :---: |
-| ![3D Graph](assets/3d_graph.png) | ![Sidebar](assets/sidebar.png) | ![Stats](assets/stats.png) |
+Cortex 採用 **四層垂直記憶模型**，確保系統在廣度與深度之間取得完美平衡：
 
----
+### 1. 原始輸入層 (Raw Input / L2) - **「瞬時感官」**
+- **用途**：記錄 100% 原始對話或代碼。
+- **設計用意**：防止在後續摘要過程中遺失關鍵細節（如具體的變數名稱或用戶語氣）。
 
-## 🏗️ 認知架構 (Architecture)
+### 2. 事件記憶層 (Episodic Memory / L1) - **「經歷流」**
+- **用途**：將 Raw 數據處理為按時間排序的「事件摘要」。
+- **設計用意**：讓系統知道「發生了什麼」，提供時間維度的檢索能力。
 
-傳統向量資料庫將所有文本視為平等。Cortex 採用 **四層認知階層**：
+### 3. 事實知識層 (Fact Memory / Semantic) - **「知識提取」**
+- **用途**：從事件中萃取出結構化的事實（例：用戶偏好 React、工作時間是深夜）。
+- **設計用意**：打破時間限制，形成跨時間點的永久知識。
 
-```mermaid
-graph TD
-    A[原始輸入 Raw] -->|處理| B[情節記憶 Episode]
-    B -->|抽象化| C[事實記憶 Fact]
-    C -->|群集| D[概念記憶 Concept]
-    
-    subgraph "短期/工作記憶"
-    A
-    B
-    end
-    
-    subgraph "長期/語意記憶"
-    C
-    D
-    end
-```
-
-1.  **原始輸入 (Raw)**：對話的原始紀錄。
-2.  **情節記憶 (Episode)**：以時間為中心的事件摘要，記錄「今天發生了什麼」。
-3.  **事實記憶 (Fact)**：關於使用者或專案的結構化知識（如：「使用者偏好 React」）。
-4.  **概念記憶 (Concept)**：高階抽象術語與實體群集。
+### 4. 抽象概念層 (Concept Memory) - **「認知群集」**
+- **用途**：自動將多個事實關聯為更高層級的概念圖譜。
+- **設計用意**：實現非感官的語意聯想，類比人類的「聯想力」。
 
 ---
 
-## 🕸️ 知識圖譜與語意連結
+## 🚀 系統實機演示
 
-Cortex 不僅僅是在找「相似」的文字；它理解**關係**。當記憶被儲存時，Cortex 會建立有向邊：
-- **`SUPPORTS` (支持)**：驗證現有知識。
-- **`CONTRADICTS` (矛盾)**：標記衝突資訊，供人類或模型審核。
-- **`PART_OF` (組成)**：將細節連結至更宏觀的情節。
+### 1. 3D 神經知識圖譜
+![3D Neural Graph](assets/demo_3d_graph.png)
+*展示 **自動語意群集 (Autonomous Semantic Clustering)**。系統利用 `BGE-M3` 向量模型與 `pgvector` 技術，自動將 90+ 筆記憶歸類為不同的主題簇，並根據餘弦相似度建立神經連結。*
+
+### 2. 認知事件時間軸
+![Cognitive Timeline](assets/demo_timeline.png)
+*展示 **事件記憶流 (Episodic Memory Stream)**。此視圖依時間順序追蹤每一次交互與思考，使 AI 代理能夠進行「心理時間旅行」，精準檢索過去的上下文背景。*
+
+### 3. 開發編碼同步介面
+![Coding Sync](assets/demo_coding_sync.png)
+*展示 **上下文感知開發 (Context-Aware Development)**。專為管理高優先級產品需求與代碼快照而設計，展現系統在維護核心規格 (L0/L1) 的同時，如何保留深度的開發迭代歷史。*
 
 ---
 
-## 🔍 混合認知檢索 (Hybrid Retrieval)
+## 🔮 神經排名引擎 (Neural Ranking Engine)
 
-不再需要在「精確匹配」與「模糊搜尋」之間做選擇。Cortex 使用統一權重演算法：
+Cortex 的「靈魂」在於它如何決定哪些記憶該被「記起」。我們實作了一個擁有 **12 個權重維度** 的動態評分算法：
 
-| 因子 | 權重 | 描述 |
+| 指標 | 權重 | 設計用意 |
 | :--- | :--- | :--- |
-| **向量相似度** | 20% | 語意層級的覆蓋程度。 |
-| **新近度 (Recency)** | 12% | 給予最近發生的事件額外加分。 |
-| **重要性 (Importance)** | 14% | AI 或手動指定的重要性。 |
-| **Token 效率** | 10% | 優先選擇精確的摘要而非冗長的原始碼。 |
-| **新鮮度 (Novelty)** | 4% | 降低同一 Context 中重複資訊的權重。 |
+| **語意相似度 (Similarity)** | 20% | 確保記憶與當前問題的關聯性。 |
+| **新鮮度 (Recency)** | 12% | 模擬艾賓浩斯遺忘曲線，優先調用最近的資訊。 |
+| **核心重要性 (Importance)** | 14% | 區分「瑣事」與「核心需求」。 |
+| **使用頻率 (Frequency)** | 8% | 越常被提起的資訊，在大腦中越「活躍」。 |
+| **強化反饋 (Reinforcement)** | 10% | 根據用戶的滿意度手動或自動「加固」記憶。 |
+| **Token 效率 (Efficiency)** | 10% | 優先選擇資訊密度高（摘要過）的節點，節省成本。 |
+| **情感權重 (Emotion)** | 6% | 重視帶有強烈情感色彩的紀錄，捕捉用戶情緒。 |
+| **新鮮感 (Novelty)** | 4% | 分散檢索結果，防止系統陷入冗餘的循環中。 |
 
 ---
 
-## 📊 3D 視覺化儀表板
+## 💤 記憶生命週期 (Sleep Cycle)
 
-在 3D 環境中即時觀察您的 Agent 如何思考。
-- **群集視覺化**：查看記憶區段如何根據主題自然成群。
-- **情緒極性**：節點顏色反映記憶的情緒（正向/負向）。
-- **即時互動**：直接在 UI 上編輯、刪除或手動建立記憶連結。
-
----
-
-## 💤 自主記憶生命週期 (睡眠週期)
-
-記憶不是靜止的。Cortex 在背景進行「維護」：
-- **去重 (Deduplication)**：合併高度相似的記憶，節省 Token 空間。
-- **神經衰減 (Decay)**：隨著時間淡化無效資訊，保持回想的純淨度。
-- **整合 (Consolidation)**：將頻繁出現的情節模式轉化為持久的「事實」。
+系統具備自主維護能力，在背景運行的「睡眠週期」會定時處理：
+1. **智能去重 (Deduplication)**：當相似度 > 0.96 時，自動合併冗餘記憶，保持大腦精簡。
+2. **神經衰減 (Neural Decay)**：不重要且低頻率的訊息隨時間消逝，確保「工作記憶」欄位不被雜訊佔用。
+3. **固化 (Consolidation)**：將頻繁發生的事件 (Episodes) 固化為永久事實 (Facts)。
 
 ---
 
-## 🛠️ 全自動安裝指南 (從零開始)
+## 🛠️ 技術棧 (Tech Stack)
 
-### 1. 必備工具
-- [Python 3.10+](https://www.python.org/)
-- [Git](https://git-scm.com/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Ollama](https://ollama.com/) (提供本地 Embedding)
-
-### 2. 環境架設
-```bash
-# 克隆代碼
-git clone https://github.com/lowkon123/AI-Cortex-Memory-System.git
-cd AI-Cortex-Memory-System
-
-# 建立虛擬環境
-python -m venv venv
-.\venv\Scripts\activate
-
-# 安裝依賴
-pip install -r requirements.txt
-```
-
-### 3. 啟動服務
-```bash
-# 1. 下載向量模型
-ollama pull bge-m3
-
-# 2. 啟動向量資料庫 (PostgreSQL)
-docker-compose up -d
-
-# 3. 一鍵啟動 (Windows)
-.\launch_services.bat
-```
+- **核心語言**: Python 3.10+
+- **向量數據庫**: PostgreSQL + pgvector (高效相似度檢索)
+- **嵌入模型**: Ollama: `bge-m3` (支持多語言、多維度語意表示)
+- **Web 框架**: FastAPI (異步高性能接口)
+- **前端可視化**: Three.js / Force-Graph (硬體加速 3D 渲染)
 
 ---
 
-## 🔌 MCP 原生支援 (Cursor / Claude Desktop)
-
-Cortex 完全相容 **Model Context Protocol (MCP)**。
-
-**設定範例 (`.mcp.json`):**
-```json
-{
-  "mcpServers": {
-    "cortex": {
-      "command": "python",
-      "args": ["d:/路徑/到/cortex_mcp_server.py"]
-    }
-  }
-}
-```
+## 📬 未來展望 (Roadmap)
+- [ ] **協作記憶機制**：支持多個 Agent 之間的安全大腦通訊。
+- [ ] **多模態記憶**：存儲與檢索圖片、音檔的語意特徵。
+- [ ] **主動召回通知**：在檢測到背景任務相關性時主動「提醒」Agent。
 
 ---
-
-## 🤖 自定義 Agent 接入
-
-### 三端點模式 (3-Endpoint Pattern)
-透過三個簡單的 HTTP 呼叫即可接入任何 AI：
-
-1.  **`POST /agent/context`**：獲取針對當前提示詞排序後的背景資訊。
-2.  **`POST /agent/store`**：儲存對話回合或重要的專案發現。
-3.  **`POST /agent/reinforce`**：告訴 Cortex 哪些回想對任務最有幫助。
-
----
-
-## 🗺️ 開發路徑 (Roadmap)
-
-- [ ] **多模態記憶**：支援圖片與圖表 Embedding。
-- [ ] **分佈式 Cortex**：跨多台機器同步記憶。
-- [ ] **主動回想**：讓 Agent 能夠「做夢」並自動發現知識關聯。
-- [ ] **時間流圖譜**：視覺化知識在數月間的演進。
-
----
-
-## 📜 許可證與貢獻
-
-Cortex 採用 MIT 許可證。歡迎任何形式的貢獻，一起打造 AI 認知的未來。
-
----
-**Cortex Memory System - 為您的 AI 換上大腦。**
+*Developed with Passion for the Evolution of AI Cognition.*

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncpg
+import json
 from typing import Optional
 from uuid import UUID
 
@@ -79,21 +80,32 @@ class MemoryStore:
                     consolidation_count INTEGER NOT NULL DEFAULT 0,
                     activation_score FLOAT NOT NULL DEFAULT 0.0,
                     last_reinforced TIMESTAMPTZ,
-                    last_consolidated TIMESTAMPTZ
+                    last_consolidated TIMESTAMPTZ,
+                    version INTEGER NOT NULL DEFAULT 1,
+                    metadata JSONB NOT NULL DEFAULT '{{}}'::JSONB
                 )
                 """
             )
+
+            # Create Relationships table for Knowledge Graph
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS memory_relations (
+                    source_id UUID NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+                    target_id UUID NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+                    relation_type TEXT NOT NULL,
+                    weight FLOAT NOT NULL DEFAULT 1.0,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    PRIMARY KEY (source_id, target_id, relation_type)
+                )
+                """
+            )
+
+            # Migration statements for existing DBs
             for statement in (
-                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS source_type TEXT NOT NULL DEFAULT 'user'",
-                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS memory_kind TEXT NOT NULL DEFAULT 'episodic'",
-                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS confidence FLOAT NOT NULL DEFAULT 0.7",
-                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS emotional_weight FLOAT NOT NULL DEFAULT 0.0",
-                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS concept_tags TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]",
-                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS success_count INTEGER NOT NULL DEFAULT 0",
-                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS consolidation_count INTEGER NOT NULL DEFAULT 0",
-                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS activation_score FLOAT NOT NULL DEFAULT 0.0",
-                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS last_reinforced TIMESTAMPTZ",
-                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS last_consolidated TIMESTAMPTZ",
+                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1",
+                "ALTER TABLE memories ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::JSONB",
+                "CREATE INDEX IF NOT EXISTS idx_memories_content_fts ON memories USING GIN(to_tsvector('simple', content))",
             ):
                 await conn.execute(statement)
 
@@ -108,12 +120,12 @@ class MemoryStore:
                     conflict_with, source_type, memory_kind, confidence,
                     emotional_weight, concept_tags, success_count,
                     consolidation_count, activation_score, last_reinforced,
-                    last_consolidated
+                    last_consolidated, version, metadata
                 )
                 VALUES (
                     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
                     $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24,
-                    $25, $26, $27
+                    $25, $26, $27, $28, $29
                 )
                 """,
                 memory.id,
@@ -143,6 +155,8 @@ class MemoryStore:
                 memory.activation_score,
                 memory.last_reinforced,
                 memory.last_consolidated,
+                memory.version,
+                json.dumps(memory.metadata),
             )
         return memory
 
@@ -180,7 +194,9 @@ class MemoryStore:
                     consolidation_count = $23,
                     activation_score = $24,
                     last_reinforced = $25,
-                    last_consolidated = $26
+                    last_consolidated = $26,
+                    version = $27,
+                    metadata = $28
                 WHERE id = $1
                 """,
                 memory.id,
@@ -209,6 +225,8 @@ class MemoryStore:
                 memory.activation_score,
                 memory.last_reinforced,
                 memory.last_consolidated,
+                memory.version,
+                json.dumps(memory.metadata),
             )
         return memory
 
@@ -216,6 +234,44 @@ class MemoryStore:
         async with self._pool.acquire() as conn:
             result = await conn.execute("DELETE FROM memories WHERE id = $1", memory_id)
             return "DELETE 1" in result
+
+    async def add_relation(self, source_id: UUID, target_id: UUID, relation_type: str, weight: float = 1.0) -> None:
+        """Add a directed relationship between two memory nodes."""
+        async with self._pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO memory_relations (source_id, target_id, relation_type, weight, created_at)
+                VALUES ($1, $2, $3, $4, NOW())
+                ON CONFLICT (source_id, target_id, relation_type) DO UPDATE SET weight = $4
+                """,
+                source_id,
+                target_id,
+                relation_type,
+                weight,
+            )
+
+    async def delete_relation(self, source_id: UUID, target_id: UUID, relation_type: str) -> bool:
+        """Remove a relationship from the Knowledge Graph."""
+        async with self._pool.acquire() as conn:
+            result = await conn.execute(
+                "DELETE FROM memory_relations WHERE source_id = $1 AND target_id = $2 AND relation_type = $3",
+                source_id,
+                target_id,
+                relation_type,
+            )
+            return "DELETE 1" in result
+
+    async def get_relations(self, memory_id: UUID, direction: str = "both") -> list[dict]:
+        """Fetch all relationships for a specific node."""
+        async with self._pool.acquire() as conn:
+            if direction == "out":
+                rows = await conn.fetch("SELECT * FROM memory_relations WHERE source_id = $1", memory_id)
+            elif direction == "in":
+                rows = await conn.fetch("SELECT * FROM memory_relations WHERE target_id = $1", memory_id)
+            else:
+                rows = await conn.fetch("SELECT * FROM memory_relations WHERE source_id = $1 OR target_id = $1", memory_id)
+
+            return [dict(row) for row in rows]
 
     async def list_all(self, status: Optional[str] = None, limit: int = 100) -> list[MemoryNode]:
         async with self._pool.acquire() as conn:
@@ -443,4 +499,6 @@ class MemoryStore:
             activation_score=row.get("activation_score", 0.0),
             last_reinforced=row.get("last_reinforced"),
             last_consolidated=row.get("last_consolidated"),
+            version=row.get("version", 1),
+            metadata=json.loads(row.get("metadata", "{}")),
         )

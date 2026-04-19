@@ -16,7 +16,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from src.memory_feedback import MemoryFeedback
 from src.memory_graph import MemoryGraph
 from src.models import MemoryKind, MemoryNode, MemorySource, MemoryStoreConfig, MemoryStatus, ZoomLevel, utc_now
-from src.zh_tw.fact_extractor import extract_facts
+from src.zh_tw.fact_extractor import FactExtractionPipeline
 from src.zh_tw.memory_ranker import MemoryRanker
 from src.zh_tw.memory_store import MemoryStore
 from src.zh_tw.memory_zoom import MemoryZoom
@@ -36,6 +36,7 @@ sleep_task = None
 ranker = MemoryRanker()
 feedback = MemoryFeedback()
 memory_graph = MemoryGraph()
+fact_pipeline = FactExtractionPipeline(model="bge-m3")
 
 
 @asynccontextmanager
@@ -80,11 +81,12 @@ def infer_emotional_weight(sentiment: str | None) -> float:
     return mapping.get(sentiment, 0.25)
 
 
-async def enrich_memory(memory: MemoryNode, model: str = "gemma4:e2b") -> MemoryNode:
+async def enrich_memory(memory: MemoryNode, model: str = "bge-m3") -> MemoryNode:
     """Attach derived concepts and graph metadata to a memory."""
     if not memory.concept_tags:
         try:
-            facts = await extract_facts(memory.content, model=model)
+            items = await fact_pipeline.extract_structured_knowledge(memory.content)
+            facts = [item["content"] for item in items if item.get("type") == "fact"]
         except Exception:
             facts = []
         entities = memory_graph.extract_entities(memory.content)
@@ -127,6 +129,8 @@ def serialize_memory(memory: MemoryNode, include_reasoning: bool = False) -> dic
         "activation_score": memory.activation_score,
         "last_reinforced": memory.last_reinforced.isoformat() if memory.last_reinforced else "",
         "last_consolidated": memory.last_consolidated.isoformat() if memory.last_consolidated else "",
+        "version": memory.version,
+        "metadata": memory.metadata,
     }
     if include_reasoning:
         data["recall"] = ranker.explain_score(memory)
@@ -702,29 +706,29 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div id="header">
   <h1>CORTEX MEMORY ENGINE</h1>
   <div id="stats">
-    節點: <span id="stat-nodes">0</span> &nbsp;|&nbsp;
-    連結: <span id="stat-links">0</span> &nbsp;|&nbsp;
-    閾值: <span>0.75</span>
+    Nodes: <span id="stat-nodes">0</span> &nbsp;|&nbsp;
+    Links: <span id="stat-links">0</span> &nbsp;|&nbsp;
+    Threshold: <span>0.75</span>
   </div>
 </div>
 
 <!-- ════ 控制列 ════ -->
 <div id="controls">
-  <button class="ctrl-btn active" id="color-importance" onclick="setColorMode('importance')">依重要性</button>
-  <button class="ctrl-btn" id="color-cluster" onclick="setColorMode('cluster')">依主題</button>
-  <button class="ctrl-btn" id="color-sentiment" onclick="setColorMode('sentiment')">依情緒</button>
+  <button class="ctrl-btn active" id="color-importance" onclick="setColorMode('importance')">By Importance</button>
+  <button class="ctrl-btn" id="color-cluster" onclick="setColorMode('cluster')">By Topic</button>
+  <button class="ctrl-btn" id="color-sentiment" onclick="setColorMode('sentiment')">By Sentiment</button>
   <div class="ctrl-divider"></div>
   <select class="ctrl-select" id="session-filter" onchange="filterBySession(this.value)">
-    <option value="">所有 Session</option>
+    <option value="">All Sessions</option>
   </select>
   <select class="ctrl-select" id="persona-filter" onchange="filterByPersona(this.value)">
-    <option value="">所有人格</option>
+    <option value="">All Personas</option>
   </select>
   <div class="ctrl-divider"></div>
-  <button class="ctrl-btn" onclick="toggleStats()">📊 統計</button>
-  <button class="ctrl-btn" onclick="location.href='/timeline'">📅 時間軸</button>
+  <button class="ctrl-btn" onclick="toggleStats()">📊 Stats</button>
+  <button class="ctrl-btn" onclick="location.href='/timeline'">📅 Timeline</button>
   <button class="ctrl-btn" onclick="location.href='/coding'">💻 Coding</button>
-  <button class="ctrl-btn" id="btn-edit-mode" onclick="toggleEditMode()" style="color: #f472b6; border-color: rgba(244,114,182,0.3)">📝 編輯模式</button>
+  <button class="ctrl-btn" id="btn-edit-mode" onclick="toggleEditMode()" style="color: #f472b6; border-color: rgba(244,114,182,0.3)">📝 Edit Mode</button>
 </div>
 
 <div id="graph-container"></div>
@@ -732,10 +736,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <!-- ════ 右側詳情+編輯面板 ════ -->
 <div id="panel">
   <div id="panel-header">
-    <h2>記憶詳情</h2>
+    <h2>Memory Details</h2>
     <div class="panel-actions">
-      <button class="btn btn-save" onclick="saveMemory()">儲存變更</button>
-      <button class="btn btn-delete" onclick="deleteMemory()">刪除</button>
+      <button class="btn btn-save" onclick="saveMemory()">Save Changes</button>
+      <button class="btn btn-delete" onclick="deleteMemory()">Delete</button>
       <button class="btn btn-close" onclick="closePanel()">✕</button>
     </div>
   </div>
@@ -743,13 +747,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     <!-- 唯讀 Meta -->
     <div class="meta-row">
-      <div class="meta-cell"><div class="mc-label">建立時間</div><div class="mc-value time" id="f-created">—</div></div>
-      <div class="meta-cell"><div class="mc-label">最後更新</div><div class="mc-value time" id="f-updated">—</div></div>
-      <div class="meta-cell"><div class="mc-label">最後存取</div><div class="mc-value time" id="f-accessed">—</div></div>
+      <div class="meta-cell"><div class="mc-label">Created</div><div class="mc-value time" id="f-created">—</div></div>
+      <div class="meta-cell"><div class="mc-label">Updated</div><div class="mc-value time" id="f-updated">—</div></div>
+      <div class="meta-cell"><div class="mc-label">Last Accessed</div><div class="mc-value time" id="f-accessed">—</div></div>
     </div>
     <div class="meta-row">
-      <div class="meta-cell"><div class="mc-label">存取次數</div><div class="mc-value acc" id="f-access-count">—</div></div>
-      <div class="field" style="margin-bottom:0"><div class="field-label">情緒</div>
+      <div class="meta-cell"><div class="mc-label">Access Count</div><div class="mc-value acc" id="f-access-count">—</div></div>
+      <div class="field" style="margin-bottom:0"><div class="field-label">Sentiment</div>
         <select id="f-sentiment">
           <option value="positive">Positive</option>
           <option value="negative">Negative</option>
@@ -757,12 +761,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <option value="mixed">Mixed</option>
         </select>
       </div>
-      <div class="field" style="margin-bottom:0"><div class="field-label">人格</div><input type="text" id="f-persona"></div>
+      <div class="field" style="margin-bottom:0"><div class="field-label">Persona</div><input type="text" id="f-persona"></div>
     </div>
     <div class="meta-row">
-      <div class="meta-cell"><div class="mc-label">縮放層級</div><div class="mc-value" id="f-zoom" style="color:#60a5fa">—</div></div>
-      <div class="meta-cell"><div class="mc-label">群集</div><div class="mc-value" id="f-cluster" style="color:#34d399">—</div></div>
-      <div class="meta-cell"><div class="mc-label">記憶 ID</div><div class="mc-value time" id="f-id" style="font-size:9px;word-break:break-all;">—</div></div>
+      <div class="meta-cell"><div class="mc-label">Zoom Level</div><div class="mc-value" id="f-zoom" style="color:#60a5fa">—</div></div>
+      <div class="meta-cell"><div class="mc-label">Cluster</div><div class="mc-value" id="f-cluster" style="color:#34d399">—</div></div>
+      <div class="meta-cell"><div class="mc-label">Memory ID</div><div class="mc-value time" id="f-id" style="font-size:9px;word-break:break-all;">—</div></div>
     </div>
 
     <!-- 可編輯欄位 -->
@@ -796,31 +800,31 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
 
     <div class="field field-content">
-      <div class="field-label">完整內容 (L2) <span class="badge">可編輯</span></div>
+      <div class="field-label">Full Content (L2) <span class="badge">Editable</span></div>
       <textarea id="f-content"></textarea>
     </div>
 
     <div class="field">
-      <div class="field-label">摘要 (L1) <span class="badge">可編輯</span></div>
+      <div class="field-label">Summary (L1) <span class="badge">Editable</span></div>
       <textarea id="f-summary-l1" style="min-height:50px"></textarea>
     </div>
 
     <div class="field">
-      <div class="field-label">概要 (L0) <span class="badge">可編輯</span></div>
+      <div class="field-label">Glimpse (L0) <span class="badge">Editable</span></div>
       <input type="text" id="f-summary-l0">
     </div>
 
     <div class="meta-row" style="margin-top:4px">
       <div class="field" style="margin-bottom:0">
-        <div class="field-label">重要性</div>
+        <div class="field-label">Importance</div>
         <input type="number" id="f-importance" min="0" max="1" step="0.05">
       </div>
       <div class="field" style="margin-bottom:0">
-        <div class="field-label">強化提升</div>
+        <div class="field-label">Reinforcement Boost</div>
         <input type="number" id="f-boost" min="0" max="1" step="0.05">
       </div>
       <div class="field" style="margin-bottom:0">
-        <div class="field-label">狀態</div>
+        <div class="field-label">Status</div>
         <select id="f-status">
           <option value="active">Active</option>
           <option value="archived">Archived</option>
@@ -833,19 +837,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   </div>
 </div>
 
-<!-- ════ 統計面板 ════ -->
+<!-- ════ Statistics Panel ════ -->
 <div id="stats-panel">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <h2 style="margin-bottom:0">系統統計</h2>
+    <h2 style="margin-bottom:0">System Statistics</h2>
     <button class="btn btn-close" onclick="toggleStats()">✕</button>
   </div>
   <div id="stats-content"></div>
 </div>
 
-<!-- ════ 記憶清單 ════ -->
+<!-- ════ Memory List ════ -->
 <div id="list-panel">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-shrink:0;">
-    <h2 style="margin-bottom:0; font-size: 14px; color: #f472b6; letter-spacing:2px; font-weight: 600;">所有大腦記憶</h2>
+    <h2 style="margin-bottom:0; font-size: 14px; color: #f472b6; letter-spacing:2px; font-weight: 600;">Neural Memories</h2>
     <button class="btn btn-close" onclick="toggleEditMode()">✕</button>
   </div>
   <div id="list-content" style="flex:1; overflow-y:auto; padding-right: 5px;"></div>
@@ -853,35 +857,35 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <div id="toast"></div>
 
-<!-- ════ 新增記憶 Modal ════ -->
+<!-- ════ Add Memory Modal ════ -->
 <div id="add-modal">
   <div id="add-modal-inner">
-    <h3>✨ 新增記憶</h3>
+    <h3>✨ New Memory</h3>
     <div class="field field-content">
-      <div class="field-label">記憶內容</div>
-      <textarea id="add-content" placeholder="輸入要記住的內容..."></textarea>
+      <div class="field-label">Memory Content</div>
+      <textarea id="add-content" placeholder="Type something to remember..."></textarea>
     </div>
     <div class="meta-row">
       <div class="field" style="margin-bottom:0">
-        <div class="field-label">重要性</div>
+        <div class="field-label">Importance</div>
         <input type="number" id="add-importance" value="0.5" min="0" max="1" step="0.05">
       </div>
       <div class="field" style="margin-bottom:0">
-        <div class="field-label">人格</div>
+        <div class="field-label">Persona</div>
         <input type="text" id="add-persona" value="default">
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
-      <button class="btn" style="background:rgba(255,255,255,0.05);color:#888;" onclick="closeAddModal()">取消</button>
-      <button class="btn btn-save" onclick="submitNewMemory()">建立記憶</button>
+      <button class="btn" style="background:rgba(255,255,255,0.05);color:#888;" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-save" onclick="submitNewMemory()">Store Memory</button>
     </div>
   </div>
 </div>
 
-<button id="fab-add" onclick="openAddModal()" title="新增記憶">＋</button>
+<button id="fab-add" onclick="openAddModal()" title="Add Memory">＋</button>
 
 <div id="search-box">
-  <input id="search-input" type="text" placeholder="搜尋記憶內容...">
+  <input id="search-input" type="text" placeholder="Search memories...">
 </div>
 
 <script src="https://unpkg.com/3d-force-graph"></script>
@@ -933,7 +937,7 @@ function setColorMode(mode) {
 
 function fmtTime(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  return new Date(iso).toLocaleString('en-US', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
 }
 
 function toast(msg, ok=true) {
@@ -990,7 +994,7 @@ function loadGraph(session='', persona='') {
         .nodeLabel(node => {
           return `<div style="background: rgba(16, 16, 28, 0.95); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(96, 165, 250, 0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.5); backdrop-filter: blur(10px); max-width: 260px; font-family: 'Inter', sans-serif;">
             <div style="color: #60a5fa; font-size: 11px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; text-transform: uppercase;">
-              ${node.summary_l0 || '未分類'}
+              ${node.summary_l0 || 'Unclassified'}
             </div>
             <div style="color: #e2e8f0; font-size: 13px; line-height: 1.5; margin-bottom: 8px;">
               ${(node.summary_l1 || node.content || '').substring(0, 80)}${(node.summary_l1 || node.content || '').length > 80 ? '...' : ''}
@@ -1057,10 +1061,10 @@ function loadFilters(data) {
     });
   });
 
-  // 人格選單
+  // Personas
   const personas = [...new Set(data.nodes.map(n => n.persona).filter(Boolean))];
   const pSel = document.getElementById('persona-filter');
-  pSel.innerHTML = '<option value="">所有人格</option>';
+  pSel.innerHTML = '<option value="">All Personas</option>';
   personas.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p;
@@ -1078,7 +1082,7 @@ function filterByPersona(val) {
   loadGraph('', val);
 }
 
-// ──── 開啟面板 ────
+// ──── Open Panel ────
 async function openPanel(node) {
   currentNodeId = node.id;
 
@@ -1119,26 +1123,6 @@ async function openPanel(node) {
   document.getElementById('f-concepts').value = (detail.concept_tags || []).join(', ');
 
   document.getElementById('panel').classList.add('open');
-  return;
-
-  document.getElementById('f-id').textContent = node.id;
-  document.getElementById('f-created').textContent = fmtTime(node.created_at);
-  document.getElementById('f-updated').textContent = fmtTime(node.updated_at);
-  document.getElementById('f-accessed').textContent = fmtTime(node.last_accessed);
-  document.getElementById('f-access-count').textContent = node.access_count;
-  document.getElementById('f-zoom').textContent = node.zoom_level.toUpperCase();
-  document.getElementById('f-sentiment').textContent = node.sentiment || '—';
-  document.getElementById('f-persona').textContent = node.persona || 'default';
-  document.getElementById('f-cluster').textContent = '#' + node.cluster_id;
-
-  document.getElementById('f-content').value = node.content;
-  document.getElementById('f-summary-l1').value = node.summary_l1 || '';
-  document.getElementById('f-summary-l0').value = node.summary_l0 || '';
-  document.getElementById('f-importance').value = node.importance;
-  document.getElementById('f-boost').value = node.boost;
-  document.getElementById('f-status').value = node.status;
-
-  document.getElementById('panel').classList.add('open');
 }
 
 function closePanel() {
@@ -1147,7 +1131,7 @@ function closePanel() {
   currentNodeId = null;
 }
 
-// ──── 編輯清單模式 ────
+// ──── Edit List Mode ────
 function toggleEditMode() {
   isEditMode = !isEditMode;
   Graph.enableNodeDrag(!isEditMode);
@@ -1156,13 +1140,13 @@ function toggleEditMode() {
   const listPanel = document.getElementById('list-panel');
   if (isEditMode) {
     btn.classList.add('active');
-    btn.innerHTML = '📝 退出編輯';
+    btn.innerHTML = '📝 Exit Edit';
     listPanel.classList.add('open');
     if (document.getElementById('stats-panel').classList.contains('open')) toggleStats();
     renderMemoryList();
   } else {
     btn.classList.remove('active');
-    btn.innerHTML = '📝 編輯模式';
+    btn.innerHTML = '📝 Edit Mode';
     listPanel.classList.remove('open');
     closePanel();
   }
@@ -1176,7 +1160,7 @@ function renderMemoryList() {
   nodes.forEach(n => {
     html += `<div class="list-item" onclick="selectNodeById('${n.id}')">
       <div style="display:flex; justify-content:space-between; margin-bottom:4px">
-        <strong style="color:#60a5fa; font-size:12px;">${n.summary_l0 || '未分類'}</strong>
+        <strong style="color:#60a5fa; font-size:12px;">${n.summary_l0 || 'Unclassified'}</strong>
         <span style="font-size:10px; color:#888;">#${n.cluster_id || 0}</span>
       </div>
       <div style="font-size:11px;color:#bbb; line-height: 1.4">${n.summary_l1 || n.content.substring(0,30) + '...'}</div>
@@ -1195,7 +1179,7 @@ function selectNodeById(id) {
   }
 }
 
-// ──── 儲存 ────
+// ──── Save ────
 async function saveMemory() {
   if (!currentNodeId) return;
   const body = {
@@ -1221,29 +1205,29 @@ async function saveMemory() {
   });
 
   if (res.ok) {
-    toast('記憶已更新');
-    loadGraph(); // 重新載入圖
+    toast('Memory updated');
+    loadGraph(); 
   } else {
-    toast('更新失敗', false);
+    toast('Update failed', false);
   }
 }
 
-// ──── 刪除 ────
+// ──── Delete ────
 async function deleteMemory() {
   if (!currentNodeId) return;
-  if (!confirm('確定要永久刪除這段記憶嗎？此操作無法復原。')) return;
+  if (!confirm('Are you sure you want to permanently delete this memory? This action cannot be undone.')) return;
 
   const res = await fetch(`/api/memory/${currentNodeId}`, { method: 'DELETE' });
   if (res.ok) {
-    toast('記憶已刪除');
+    toast('Memory deleted');
     closePanel();
     loadGraph();
   } else {
-    toast('刪除失敗', false);
+    toast('Deletion failed', false);
   }
 }
 
-// ──── 搜尋 ────
+// ──── Search ────
 document.getElementById('search-input').addEventListener('input', (e) => {
   const q = e.target.value.toLowerCase();
   const data = Graph.graphData();
@@ -1261,7 +1245,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ──── 新增記憶 Modal ────
+// ──── Add Memory Modal ────
 function openAddModal() {
   document.getElementById('add-modal').classList.add('show');
   document.getElementById('add-content').value = '';
@@ -1274,7 +1258,7 @@ function closeAddModal() {
 }
 async function submitNewMemory() {
   const content = document.getElementById('add-content').value.trim();
-  if (!content) { toast('請輸入記憶內容', false); return; }
+  if (!content) { toast('Please enter memory content', false); return; }
 
   const body = {
     content,
@@ -1282,7 +1266,7 @@ async function submitNewMemory() {
     persona: document.getElementById('add-persona').value.trim() || 'default',
   };
 
-  toast('正在建立記憶...');
+  toast('Creating memory...');
   const res = await fetch('/api/memory', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1290,15 +1274,15 @@ async function submitNewMemory() {
   });
 
   if (res.ok) {
-    toast('記憶已建立！');
+    toast('Memory created!');
     closeAddModal();
     loadGraph();
   } else {
-    toast('建立失敗', false);
+    toast('Creation failed', false);
   }
 }
 
-// ──── 統計面板 ────
+// ──── Stats ────
 function toggleStats() {
   const panel = document.getElementById('stats-panel');
   panel.classList.toggle('open');
@@ -1357,14 +1341,14 @@ async function loadStats() {
 
   el.innerHTML = `
     <div class="stat-card">
-      <h4>總記憶數</h4>
+      <h4>Total Memories</h4>
       <div class="stat-big" style="color:#60a5fa">${s.total}</div>
-      <div style="font-size:11px;color:#555;margin-top:4px">平均重要性: <span style="color:#fbbf24">${s.avg_importance}</span></div>
+      <div style="font-size:11px;color:#555;margin-top:4px">Avg Importance: <span style="color:#fbbf24">${s.avg_importance}</span></div>
     </div>
-    <div class="stat-card"><h4>狀態分佈</h4>${statusBars}</div>
-    <div class="stat-card"><h4>情緒分佈</h4>${sentBars || '<div style="font-size:11px;color:#555;">尚無情緒資料</div>'}</div>
-    <div class="stat-card"><h4>每日新增趨勢</h4>${trendSvg || '<div style="font-size:11px;color:#555;">資料不足</div>'}</div>
-    <div class="stat-card"><h4>最常存取 TOP 5</h4>${topList || '<div style="font-size:11px;color:#555;">尚無資料</div>'}</div>
+    <div class="stat-card"><h4>Status Distribution</h4>${statusBars}</div>
+    <div class="stat-card"><h4>Sentiment Distribution</h4>${sentBars || '<div style="font-size:11px;color:#555;">No sentiment data</div>'}</div>
+    <div class="stat-card"><h4>Daily Trend</h4>${trendSvg || '<div style="font-size:11px;color:#555;">Insufficient data</div>'}</div>
+    <div class="stat-card"><h4>Top 5 Accessed</h4>${topList || '<div style="font-size:11px;color:#555;">No data</div>'}</div>
   `;
 }
 </script>
@@ -1373,11 +1357,11 @@ async function loadStats() {
 
 
 # ═══════════════════════════════════════
-#  時間軸視圖 HTML (3.3)
+#  Timeline View HTML
 # ═══════════════════════════════════════
 
 TIMELINE_HTML = """<!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1423,7 +1407,7 @@ TIMELINE_HTML = """<!DOCTYPE html>
     margin: 0 auto;
   }
 
-  /* 中軸線 */
+  /* Center Axis */
   #timeline::before {
     content: '';
     position: absolute;
@@ -1452,7 +1436,7 @@ TIMELINE_HTML = """<!DOCTYPE html>
   .tl-item.left { margin-right: auto; margin-left: 0; }
   .tl-item.right { margin-left: auto; margin-right: 0; }
 
-  /* 連接點 */
+  /* Connection Point */
   .tl-item::after {
     content: '';
     position: absolute;
@@ -1488,13 +1472,13 @@ TIMELINE_HTML = """<!DOCTYPE html>
     text-align: center; padding: 80px; color: #444; font-size: 14px;
   }
 
-  /* 情緒色標 */
+  /* Sentiment Colors */
   .sent-positive { background: rgba(52,211,153,0.15); color: #34d399; }
   .sent-negative { background: rgba(239,68,68,0.15); color: #ef4444; }
   .sent-neutral { background: rgba(107,114,128,0.15); color: #6b7280; }
   .sent-mixed { background: rgba(251,191,36,0.15); color: #fbbf24; }
 
-  /* 動畫 */
+  /* Animation */
   .tl-item { opacity: 0; animation: fadeSlideIn 0.5s forwards; }
   @keyframes fadeSlideIn {
     from { opacity: 0; transform: translateY(20px); }
@@ -1505,11 +1489,11 @@ TIMELINE_HTML = """<!DOCTYPE html>
 <body>
 <div id="tl-header">
   <h1>CORTEX TIMELINE</h1>
-  <a href="/" class="back-btn">← 返回 3D 視圖</a>
+  <a href="/" class="back-btn">← Back to 3D View</a>
 </div>
 
 <div id="timeline">
-  <div class="tl-empty" id="tl-loading">載入記憶中...</div>
+  <div class="tl-empty" id="tl-loading">Loading memories...</div>
 </div>
 
 <script>
@@ -1518,11 +1502,11 @@ async function loadTimeline() {
   const data = await res.json();
   const tl = document.getElementById('timeline');
 
-  // 按時間排序（最舊到最新）
+  // Sort by time (latest first)
   const nodes = data.nodes.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
   if (nodes.length === 0) {
-    tl.innerHTML = '<div class="tl-empty">尚無記憶紀錄</div>';
+    tl.innerHTML = '<div class="tl-empty">No memory records found</div>';
     return;
   }
 
@@ -1531,7 +1515,7 @@ async function loadTimeline() {
     const side = i % 2 === 0 ? 'left' : 'right';
     const sentClass = n.sentiment ? 'sent-' + n.sentiment : 'sent-neutral';
     const sentLabel = n.sentiment || 'neutral';
-    const time = new Date(n.created_at).toLocaleString('zh-TW', {
+    const time = new Date(n.created_at).toLocaleString('en-US', {
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit'
     });
@@ -1544,7 +1528,7 @@ async function loadTimeline() {
       <span class="tl-tag">${n.summary_l0 || '—'}</span>
       <span class="tl-sentiment ${sentClass}">${sentLabel}</span>
       <div class="tl-summary">${n.summary_l1 || n.label || n.content.substring(0, 80) + '...'}</div>
-      <div class="tl-importance">重要性 <span>${n.importance}</span> · 存取 <span>${n.access_count}</span>次 · ${n.persona || 'default'}</div>
+      <div class="tl-importance">Importance <span>${n.importance}</span> · Access <span>${n.access_count}</span>x · ${n.persona || 'default'}</div>
     `;
     tl.appendChild(card);
   });
@@ -1558,7 +1542,7 @@ loadTimeline();
 #  Coding Sync HTML
 # ═══════════════════════════════════════
 CODING_HTML = """<!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1597,22 +1581,22 @@ CODING_HTML = """<!DOCTYPE html>
 <body>
   <div id="header">
     <h1><span style="color:#fff">CORTEX</span> CODING SYNC</h1>
-    <button class="btn" onclick="location.href='/'">🔙 返回大腦主視圖</button>
+    <button class="btn" onclick="location.href='/'">🔙 Back to Brain View</button>
   </div>
   <div class="container">
     <div class="col">
-      <div class="col-header">🎯 用戶要求 (Requirements) <span>⚡ 系統層級優先權 (Imp: 1.0)</span></div>
+      <div class="col-header" style="color: #f472b6">📋 Product Requirements <span>Core Spec</span></div>
       <div class="col-input">
-        <textarea id="req-input" placeholder="撰寫新的功能需求、核心規格或跨平台待辦事項..."></textarea>
-        <button class="btn" style="align-self: flex-end; background: rgba(244,114,182,0.1); border-color: #f472b6; color: #f472b6" onclick="addMem('req')">＋ 寫入需求記憶</button>
+        <textarea id="req-input" placeholder="Enter feature requirements or specs here..."></textarea>
+        <button class="btn" style="align-self: flex-end; background: rgba(244,114,182,0.1); border-color: #f472b6; color: #f472b6" onclick="addMem('req')">📝 Save Requirement</button>
       </div>
       <div class="list" id="req-list"></div>
     </div>
     <div class="col">
-      <div class="col-header" style="color: #34d399">💻 程式碼紀錄 (Code Commits) <span>💾 開發迭代過程</span></div>
+      <div class="col-header" style="color: #34d399">🚀 Code Commits <span>Development Progress</span></div>
       <div class="col-input">
-        <textarea id="cmt-input" placeholder="貼上變更的 Code Snippets、除錯紀錄..."></textarea>
-        <button class="btn" style="align-self: flex-end; background: rgba(52,211,153,0.1); border-color: #34d399; color: #34d399" onclick="addMem('cmt')">＋ 寫入開發紀錄</button>
+        <textarea id="cmt-input" placeholder="Add code snippets or change logs..."></textarea>
+        <button class="btn" style="align-self: flex-end; background: rgba(52,211,153,0.1); border-color: #34d399; color: #34d399" onclick="addMem('cmt')">💾 Save Commit</button>
       </div>
       <div class="list" id="cmt-list"></div>
     </div>
@@ -1627,7 +1611,7 @@ async function load() {
 
   document.getElementById('req-list').innerHTML = reqs.map(n => 
     `<div class="card req-card">
-      <button class="del-btn" title="刪除" onclick="del('${n.id}')">✕</button>
+      <button class="del-btn" title="Delete" onclick="del('${n.id}')">✕</button>
       <div class="meta"><span>🏷️ ${n.summary_l0 || 'Requirement'} | ID: ${n.id.substring(0,8)}</span><span>Imp: <span class="val">${Number(n.importance).toFixed(1)}</span></span></div>
       <div class="content">${n.content}</div>
     </div>`
@@ -1635,8 +1619,8 @@ async function load() {
 
   document.getElementById('cmt-list').innerHTML = cmts.map(n => 
     `<div class="card cmt-card">
-      <button class="del-btn" title="刪除" onclick="del('${n.id}')">✕</button>
-      <div class="meta"><span>📂 ${n.summary_l0 || 'Commit'} | ID: ${n.id.substring(0,8)}</span><span>🕒 ${new Date(n.created_at).toLocaleString('zh-TW')}</span></div>
+      <button class="del-btn" title="Delete" onclick="del('${n.id}')">✕</button>
+      <div class="meta"><span>📂 ${n.summary_l0 || 'Commit'} | ID: ${n.id.substring(0,8)}</span><span>🕒 ${new Date(n.created_at).toLocaleString('en-US')}</span></div>
       <div class="content" style="font-family: monospace; font-size:12px;">${n.content}</div>
     </div>`
   ).join('');
@@ -1649,7 +1633,7 @@ async function addMem(type) {
 
   const btn = event.target;
   const oldText = btn.innerText;
-  btn.innerText = '處理中...';
+  btn.innerText = 'Processing...';
   btn.disabled = true;
 
   const body = {
@@ -1666,11 +1650,12 @@ async function addMem(type) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if(res.ok) {
+    if (res.ok) {
+      alert('Saved successfully!');
       input.value = '';
       load();
     } else {
-      alert('寫入失敗');
+      alert('Save failed');
     }
   } finally {
     btn.innerText = oldText;
@@ -1679,7 +1664,7 @@ async function addMem(type) {
 }
 
 async function del(id) {
-  if(!confirm('真的要刪除這筆記憶嗎？')) return;
+  if(!confirm('Are you sure you want to delete this memory?')) return;
   const res = await fetch(`/api/memory/${id}`, { method: 'DELETE' });
   if(res.ok) load();
 }

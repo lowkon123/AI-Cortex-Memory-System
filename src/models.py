@@ -46,6 +46,30 @@ class MemoryKind(str, Enum):
     EPISODIC = "episodic"
     SEMANTIC = "semantic"
     PROCEDURAL = "procedural"
+    FACT = "fact"  # Structured facts extracted from raw inputs
+    CONCEPT = "concept"  # Abstracted concepts or entity clusters
+
+
+class RelationType(str, Enum):
+    """Types of semantic relationships between memories."""
+
+    SUPPORTS = "supports"
+    CONTRADICTS = "contradicts"
+    DEPENDS_ON = "depends_on"
+    CAUSES = "causes"
+    RELEVANT_TO = "relevant_to"
+    PART_OF = "part_of"
+    SUPERSEDES = "supersedes"  # For versioning (newer memory replaces older)
+
+
+class MemoryRelation(BaseModel):
+    """A directed edge in the Knowledge Graph tying two memories together."""
+
+    source_id: UUID
+    target_id: UUID
+    relation_type: RelationType
+    weight: float = Field(default=1.0, ge=0.0, le=1.0)
+    created_at: datetime = Field(default_factory=utc_now)
 
 
 class MemoryNode(BaseModel):
@@ -79,6 +103,8 @@ class MemoryNode(BaseModel):
         activation_score: Cached dynamic activation score for recall.
         last_reinforced: Last time the memory was reinforced.
         last_consolidated: Last time the memory was consolidated.
+        version: Integer version for conflict/update tracking.
+        metadata: Schema-less extension for specialized agent data.
     """
 
     id: UUID = Field(default_factory=uuid4)
@@ -108,6 +134,8 @@ class MemoryNode(BaseModel):
     activation_score: float = 0.0
     last_reinforced: Optional[datetime] = None
     last_consolidated: Optional[datetime] = None
+    version: int = 1
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     def access(self) -> None:
         """Record an access to this memory node."""
