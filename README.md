@@ -21,6 +21,14 @@ Cortex Memory Engine is a high-performance, hierarchical memory system designed 
 
 ---
 
+## 🎨 Visual Showcase
+
+| 3D Knowledge Graph | Memory Console | Cognitive Analytics |
+| :---: | :---: | :---: |
+| ![3D Graph](assets/3d_graph.png) | ![Sidebar](assets/sidebar.png) | ![Stats](assets/stats.png) |
+
+---
+
 ## 🏗️ The Cognitive Stack (Architecture)
 
 Traditional vector databases treat all text equally. Cortex uses a **4-Layer Cognitive Hierarchy**:
