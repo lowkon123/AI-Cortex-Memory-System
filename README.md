@@ -92,22 +92,58 @@ If `8000` is already occupied or you need a clean dashboard instance:
 - [run_dashboard_8001.py](run_dashboard_8001.py)
 - Dashboard alt port: `http://127.0.0.1:8001`
 
-## Run The Dashboard
+## 🚀 Quick Start (Zero to Hero)
+
+這是一個完整的安裝流程，即使是剛重灌的電腦，按順序執行即可完成：
+
+### 1. 準備基礎工具
+請確保您的電腦已安裝以下軟體：
+- [Python 3.10+](https://www.python.org/downloads/)
+- [Git](https://git-scm.com/downloads)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (用於執行資料庫)
+- [Ollama](https://ollama.com/download) (用於本地 AI 模型)
+
+### 2. 環境設定
+打開您的終端機 (Terminal / PowerShell)，執行以下指令：
 
 ```bash
-python dashboard.py
+# 1. 複製專案
+git clone https://github.com/lowkon123/AI-Cortex-Memory-System.git
+cd AI-Cortex-Memory-System
+
+# 2. 建立並啟動虛擬環境 (建議)
+python -m venv venv
+# Windows:
+.\venv\Scripts\activate
+# Mac/Linux:
+source venv/bin/activate
+
+# 3. 安裝 Python 套件
+pip install -r requirements.txt
+
+# 4. 下載向量模型 (非常重要)
+ollama pull bge-m3
 ```
 
-Open:
+### 3. 啟動服務
+1.  **啟動資料庫**：確保 Docker 正在執行，然後輸入：
+    ```bash
+    docker-compose up -d
+    ```
+2.  **啟動系統** (Windows)：
+    直接雙擊執行 `launch_services.bat`。
+    
+    *或是手動啟動 (全平台)：*
+    - API: `python -m uvicorn api.main:app --port 8002`
+    - Dashboard: `python dashboard.py`
 
-- `http://127.0.0.1:8000`
-- timeline: `http://127.0.0.1:8000/timeline`
+### 4. 驗證
+- **3D 儀表板**: 打開瀏覽器訪問 `http://localhost:8000`
+- **API 狀態**: 訪問 `http://localhost:8002/health` 如果顯示 `status: healthy` 即代表成功！
 
-If needed:
+---
 
-```bash
-python run_dashboard_8001.py
-```
+## 🏗 Main Components
 
 ## Run The Chat Demo
 
