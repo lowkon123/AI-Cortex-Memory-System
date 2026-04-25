@@ -24,15 +24,39 @@ async def _setup_connection(conn: asyncpg.Connection) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    pool = await asyncpg.create_pool(
-        **db_config.asyncpg_kwargs,
-        min_size=2,
-        max_size=10,
-        setup=_setup_connection,
+    # Core Infrastructure
+    from src.core.memory_store import MemoryStore
+    from src.core.embedding_provider import OllamaEmbeddingProvider
+    from src.core.integrity import IntegrityEngine
+    from src.core.retrieval_enhancer import RetrievalEnhancer
+    from src.models import MemoryStoreConfig
+
+    config = MemoryStoreConfig(
+        host=db_config.host,
+        port=db_config.port,
+        database=db_config.database,
+        user=db_config.user,
+        password=db_config.password,
+        vector_dim=db_config.vector_dim
     )
-    app.state.pool = pool
+
+    store = MemoryStore(config)
+    await store.connect()
+    await store.init_schema()
+
+    provider = OllamaEmbeddingProvider()
+    integrity = IntegrityEngine(store, provider)
+    enhancer = RetrievalEnhancer(provider)
+
+    # Attach to app state
+    app.state.pool = store._pool
+    app.state.store = store
+    app.state.provider = provider
+    app.state.integrity = integrity
+    app.state.enhancer = enhancer
+
     yield
-    await pool.close()
+    await store.disconnect()
 
 
 app = FastAPI(

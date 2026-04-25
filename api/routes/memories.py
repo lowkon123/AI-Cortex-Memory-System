@@ -33,6 +33,8 @@ class MemoryUpdate(BaseModel):
     content: Optional[str] = None
     importance: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     tags: Optional[list[str]] = None
+    summary_l1: Optional[str] = None
+    summary_l0: Optional[str] = None
 
 
 class MemoryResponse(BaseModel):
@@ -175,6 +177,14 @@ async def update_memory(memory_id: str, update: MemoryUpdate, request: Request):
     if update.tags is not None:
         updates.append(f"concept_tags = ${idx}::text[]")
         values.append(update.tags)
+        idx += 1
+    if update.summary_l1 is not None:
+        updates.append(f"summary_l1 = ${idx}")
+        values.append(update.summary_l1)
+        idx += 1
+    if update.summary_l0 is not None:
+        updates.append(f"summary_l0 = ${idx}")
+        values.append(update.summary_l0)
         idx += 1
 
     if not updates:

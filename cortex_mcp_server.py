@@ -124,6 +124,29 @@ def reinforce_memories(memory_ids: List[str], boost_amount: float = 0.1) -> str:
         return f"Failed to reinforce: {str(e)}"
 
 @mcp.tool()
+def update_memory(memory_id: str, content: Optional[str] = None, importance: Optional[float] = None, tags: Optional[List[str]] = None, summary_l1: Optional[str] = None, summary_l0: Optional[str] = None) -> str:
+    """
+    Update specific fields of an existing memory node.
+    Use this to refine summaries, adjust importance, or add concept tags.
+    """
+    payload = {}
+    if content is not None: payload["content"] = content
+    if importance is not None: payload["importance"] = importance
+    if tags is not None: payload["tags"] = tags
+    if summary_l1 is not None: payload["summary_l1"] = summary_l1
+    if summary_l0 is not None: payload["summary_l0"] = summary_l0
+
+    if not payload:
+        return "No fields provided for update."
+
+    try:
+        res = requests.patch(f"{API_BASE}/memories/{memory_id}", json=payload, timeout=30)
+        res.raise_for_status()
+        return f"Memory {memory_id} updated successfully."
+    except Exception as e:
+        return f"Error updating memory: {str(e)}"
+
+@mcp.tool()
 def delete_memory(memory_id: str) -> str:
     """
     Soft-delete/forget a specific memory node by ID.

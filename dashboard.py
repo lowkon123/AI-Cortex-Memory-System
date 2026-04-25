@@ -16,13 +16,13 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from src.memory_feedback import MemoryFeedback
 from src.memory_graph import MemoryGraph
 from src.models import MemoryKind, MemoryNode, MemorySource, MemoryStoreConfig, MemoryStatus, ZoomLevel, utc_now
-from src.zh_tw.fact_extractor import FactExtractionPipeline
-from src.zh_tw.memory_ranker import MemoryRanker
-from src.zh_tw.memory_store import MemoryStore
-from src.zh_tw.memory_zoom import MemoryZoom
-from src.zh_tw.embedding_provider import OllamaEmbeddingProvider
-from src.zh_tw.memory_summarizer import summarize
-from src.zh_tw.sleep_runner import get_last_sleep_report, run_sleep_cycle
+from src.core.fact_extractor import FactExtractionPipeline
+from src.core.memory_ranker import MemoryRanker
+from src.core.memory_store import MemoryStore
+from src.core.memory_zoom import MemoryZoom
+from src.core.embedding_provider import OllamaEmbeddingProvider
+from src.core.memory_summarizer import summarize
+from src.core.sleep_runner import get_last_sleep_report, run_sleep_cycle
 
 # Windows console encoding fix
 if sys.platform == 'win32':
@@ -233,7 +233,7 @@ async def graph_data(session: str = None, persona: str = None):
                     "type": "similarity",
                 })
 
-    # 衝突連線 (2.2 visualization)
+    # 因果連線 (SUPERSEDES visualization)
     conflict_ids = {str(m.id) for m in memories}
     for m in memories:
         if m.conflict_with and str(m.conflict_with) in conflict_ids:
@@ -241,7 +241,7 @@ async def graph_data(session: str = None, persona: str = None):
                 "source": str(m.id),
                 "target": str(m.conflict_with),
                 "value": 1.0,
-                "type": "conflict",
+                "type": "supersedes",
             })
 
     return JSONResponse({"nodes": nodes, "links": links})
@@ -494,8 +494,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   /* ──── 右側面板 ──── */
   #panel {
-    position: fixed; right: -520px; top: 0;
-    width: 500px; height: 100vh;
+    position: fixed; right: -520px; top: 90px;
+    width: 500px; height: calc(100vh - 90px);
     background: rgba(12, 12, 22, 0.97);
     border-left: 1px solid rgba(96, 165, 250, 0.1);
     backdrop-filter: blur(24px);
@@ -643,8 +643,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   /* ──── 統計面板 ──── */
   #stats-panel {
-    position: fixed; left: -380px; top: 0;
-    width: 360px; height: 100vh;
+    position: fixed; left: -380px; top: 90px;
+    width: 360px; height: calc(100vh - 90px);
     background: rgba(12, 12, 22, 0.97);
     border-right: 1px solid rgba(96, 165, 250, 0.1);
     backdrop-filter: blur(24px);
@@ -680,8 +680,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   /* ──── 記憶清單 ──── */
   #list-panel {
-    position: fixed; left: -380px; top: 0;
-    width: 360px; height: 100vh;
+    position: fixed; left: -380px; top: 90px;
+    width: 360px; height: calc(100vh - 90px);
     background: rgba(12, 12, 22, 0.97);
     border-right: 1px solid rgba(96, 165, 250, 0.1);
     backdrop-filter: blur(24px);
@@ -717,6 +717,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="ctrl-btn active" id="color-importance" onclick="setColorMode('importance')">By Importance</button>
   <button class="ctrl-btn" id="color-cluster" onclick="setColorMode('cluster')">By Topic</button>
   <button class="ctrl-btn" id="color-sentiment" onclick="setColorMode('sentiment')">By Sentiment</button>
+  <button class="ctrl-btn" id="color-layer" onclick="setColorMode('layer')">By Layer</button>
   <div class="ctrl-divider"></div>
   <select class="ctrl-select" id="session-filter" onchange="filterBySession(this.value)">
     <option value="">All Sessions</option>
@@ -848,10 +849,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <!-- ════ Memory List ════ -->
 <div id="list-panel">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-shrink:0;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-shrink:0;">
     <h2 style="margin-bottom:0; font-size: 14px; color: #f472b6; letter-spacing:2px; font-weight: 600;">Neural Memories</h2>
     <button class="btn btn-close" onclick="toggleEditMode()">✕</button>
   </div>
+  <input type="text" id="list-search" placeholder="Filter memories..." style="width:100%; padding: 10px 14px; margin-bottom: 16px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #e2e8f0; font-size: 12px; outline: none; font-family: 'Inter', sans-serif;">
   <div id="list-content" style="flex:1; overflow-y:auto; padding-right: 5px;"></div>
 </div>
 
@@ -915,6 +917,14 @@ const SENTIMENT_COLORS = {
   '': '#6b7280'
 };
 
+const LAYER_COLORS = {
+  working: '#f472b6',
+  episodic: '#34d399',
+  semantic: '#60a5fa',
+  concept: '#a78bfa',
+  procedural: '#22d3ee'
+};
+
 function impColor(v) {
   v = v || 0.5;
   return `hsl(${220 + v * 100}, ${60 + v * 30}%, ${55 + v * 20}%)`;
@@ -924,6 +934,7 @@ function getNodeColor(n) {
   if (n._highlighted) return '#ffffff';
   if (colorMode === 'cluster') return CLUSTER_COLORS[n.cluster_id % CLUSTER_COLORS.length];
   if (colorMode === 'sentiment') return SENTIMENT_COLORS[n.sentiment] || '#6b7280';
+  if (colorMode === 'layer') return LAYER_COLORS[n.memory_kind] || '#6b7280';
   return impColor(n.importance);
 }
 
@@ -1009,23 +1020,25 @@ function loadGraph(session='', persona='') {
           </div>`;
         })
         .linkColor(l => {
-          if (l.type === 'conflict') return 'rgba(239, 68, 68, 0.7)';
+          if (l.type === 'supersedes') return 'rgba(239, 68, 68, 0.7)';
           const opacity = 0.15 + Math.pow(l.value || 0, 3) * 0.75;
           return `rgba(96, 165, 250, ${opacity})`;
         })
         .linkWidth(l => {
-          if (l.type === 'conflict') return 1.5;
+          if (l.type === 'supersedes') return 1.5;
           return 0.4 + Math.pow(l.value || 0, 2) * 2.8;
         })
         .linkLineDash(l => {
-          if (l.type === 'conflict') return [4, 2];
+          if (l.type === 'supersedes') return [4, 2];
           return null;
         })
+        .linkDirectionalArrowLength(l => l.type === 'supersedes' ? 6 : 0)
+        .linkDirectionalArrowRelPos(1)
         .linkOpacity(0.35)
-        .linkDirectionalParticles(6)
+        .linkDirectionalParticles(l => l.type === 'supersedes' ? 0 : 6)
         .linkDirectionalParticleWidth(3.0)
         .linkDirectionalParticleSpeed(0.015)
-        .linkDirectionalParticleColor(l => (l.type === 'conflict' ? '#ff3333' : '#00ffff'))
+        .linkDirectionalParticleColor(l => (l.type === 'supersedes' ? '#ff3333' : '#00ffff'))
 
 
         .onNodeHover(node => { container.style.cursor = node ? 'pointer' : 'default'; })
@@ -1040,6 +1053,50 @@ function loadGraph(session='', persona='') {
           openPanel(node);
         })
         .d3Force('charge').strength(-60);
+
+      // ─── 穩定化動效 ───
+      let angle = 0;
+      const distance = 1400;
+      const orbitSpeed = 0.0003;
+
+      // 使用引擎內建的 Tick 來旋轉，而不是獨立的動畫循環
+      Graph.onEngineTick(() => {
+        if (!currentNodeId && !isEditMode && !window.isHovering) {
+          angle += orbitSpeed;
+          Graph.cameraPosition({
+            x: distance * Math.sin(angle),
+            z: distance * Math.cos(angle)
+          });
+        }
+      });
+
+      // 監測懸停狀態，防止閃爍 (Debounce)
+      let hoverTimeout;
+      Graph.onNodeHover(node => {
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        hoverTimeout = setTimeout(() => {
+            window.isHovering = !!node;
+        }, 50);
+        container.style.cursor = node ? 'pointer' : 'default';
+      });
+
+      // LOD (Level of Detail) 效能優化
+      if (data.nodes.length > 500) {
+        Graph.nodeVisibility(n => n.status !== 'archived');
+      }
+      if (data.nodes.length > 1500) {
+        setTimeout(() => {
+          Graph.pauseAnimation();
+        }, 3000);
+      }
+
+      // 簡化標籤以提升效能
+      Graph.nodeLabel(node => {
+        return `<div style="background: rgba(15, 23, 42, 0.9); padding: 8px; border-radius: 6px; border: 1px solid #334155; font-size: 12px; color: #e2e8f0;">
+          <b style="color: #60a5fa">${node.summary_l0 || 'Memory'}</b><br/>
+          ${(node.summary_l1 || node.content || '').substring(0, 60)}...
+        </div>`;
+      });
 
       // 載入 Session 選單
       loadFilters(data);
@@ -1152,11 +1209,21 @@ function toggleEditMode() {
   }
 }
 
-function renderMemoryList() {
+function renderMemoryList(filterText = '') {
   const data = Graph.graphData();
   const el = document.getElementById('list-content');
   let html = '';
-  const nodes = data.nodes.slice().sort((a,b) => (b.importance||0) - (a.importance||0));
+  let nodes = data.nodes.slice().sort((a,b) => (b.importance||0) - (a.importance||0));
+  
+  if (filterText) {
+    const q = filterText.toLowerCase();
+    nodes = nodes.filter(n => 
+      (n.content && n.content.toLowerCase().includes(q)) || 
+      (n.summary_l0 && n.summary_l0.toLowerCase().includes(q)) ||
+      (n.summary_l1 && n.summary_l1.toLowerCase().includes(q))
+    );
+  }
+  
   nodes.forEach(n => {
     html += `<div class="list-item" onclick="selectNodeById('${n.id}')">
       <div style="display:flex; justify-content:space-between; margin-bottom:4px">
@@ -1169,6 +1236,10 @@ function renderMemoryList() {
   });
   el.innerHTML = html;
 }
+
+document.getElementById('list-search').addEventListener('input', (e) => {
+  renderMemoryList(e.target.value);
+});
 
 function selectNodeById(id) {
   const data = Graph.graphData();
@@ -1235,6 +1306,15 @@ document.getElementById('search-input').addEventListener('input', (e) => {
     n._highlighted = q && (n.content.toLowerCase().includes(q) || n.label.toLowerCase().includes(q));
   });
   Graph.nodeColor(getNodeColor);
+  
+  // 同步開啟側邊欄並篩選
+  if (q && !isEditMode) {
+    toggleEditMode();
+  }
+  if (isEditMode) {
+    document.getElementById('list-search').value = q;
+    renderMemoryList(q);
+  }
 });
 
 document.addEventListener('keydown', (e) => {

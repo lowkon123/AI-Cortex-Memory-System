@@ -2,10 +2,10 @@ import pytest
 import asyncio
 from uuid import UUID
 from src.models import MemoryNode, MemoryStoreConfig, ZoomLevel
-from src.zh_tw.memory_store import MemoryStore
-from src.zh_tw.memory_vector import MemoryVectorStore
-from src.zh_tw.embedding_provider import OllamaEmbeddingProvider
-from src.zh_tw.memory_zoom import MemoryZoom
+from src.core.memory_store import MemoryStore
+from src.core.memory_vector import MemoryVectorStore
+from src.core.embedding_provider import OllamaEmbeddingProvider
+from src.core.memory_zoom import MemoryZoom
 from src.memory_graph import MemoryGraph, RelationType
 import inspect
 print(f"MemoryGraph file: {inspect.getfile(MemoryGraph)}")

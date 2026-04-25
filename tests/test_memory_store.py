@@ -3,7 +3,7 @@ import asyncio
 from uuid import uuid4
 from datetime import datetime
 from src.models import MemoryNode, MemoryStoreConfig, MemoryStatus, ZoomLevel
-from src.zh_tw.memory_store import MemoryStore
+from src.core.memory_store import MemoryStore
 
 @pytest.fixture
 async def store():
@@ -32,7 +32,7 @@ async def test_insert_and_get(store):
     retrieved = await store.get(node.id)
     assert retrieved is not None
     assert retrieved.content == "這是一段測試記憶"
-    assert retrieved.importance == 0.8
+    assert retrieved.importance == pytest.approx(0.8)
     assert retrieved.zoom_level == ZoomLevel.L2_FULL
 
 @pytest.mark.asyncio

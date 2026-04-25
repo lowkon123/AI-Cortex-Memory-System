@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 
 from src.models import MemoryKind, MemoryNode
-from src.zh_tw.context_builder import ContextBuilder
-from src.zh_tw.memory_forgetting import MemoryForgetting
-from src.zh_tw.memory_ranker import MemoryRanker
+from src.core.context_builder import ContextBuilder
+from src.core.memory_forgetting import MemoryForgetting
+from src.core.memory_ranker import MemoryRanker
 
 
 def test_ranker_prefers_reinforced_matching_memory():

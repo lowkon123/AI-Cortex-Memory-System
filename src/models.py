@@ -27,6 +27,7 @@ class MemoryStatus(str, Enum):
     ACTIVE = "active"
     ARCHIVED = "archived"
     COMPRESSED = "compressed"
+    CONSOLIDATED = "consolidated"
     FORGOTTEN = "forgotten"
 
 
@@ -135,6 +136,7 @@ class MemoryNode(BaseModel):
     last_reinforced: Optional[datetime] = None
     last_consolidated: Optional[datetime] = None
     version: int = 1
+    is_test: bool = False
     metadata: dict[str, Any] = Field(default_factory=dict)
 
     def access(self) -> None:

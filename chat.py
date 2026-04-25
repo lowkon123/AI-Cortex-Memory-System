@@ -8,16 +8,16 @@ from uuid import UUID, uuid4
 
 from src.memory_feedback import MemoryFeedback
 from src.models import MemoryKind, MemoryNode, MemorySource, MemoryStoreConfig, ZoomLevel, utc_now
-from src.zh_tw.conflict_detector import check_conflicts
-from src.zh_tw.context_builder import ContextBuilder
-from src.zh_tw.embedding_provider import OllamaEmbeddingProvider
-from src.zh_tw.fact_extractor import extract_facts
-from src.zh_tw.memory_ranker import MemoryRanker
-from src.zh_tw.memory_store import MemoryStore
-from src.zh_tw.memory_summarizer import summarize
-from src.zh_tw.memory_vector import MemoryVectorStore
-from src.zh_tw.memory_zoom import MemoryZoom
-from src.zh_tw.proactive_scanner import scan_upcoming
+from src.core.conflict_detector import check_conflicts
+from src.core.context_builder import ContextBuilder
+from src.core.embedding_provider import OllamaEmbeddingProvider
+from src.core.fact_extractor import extract_facts
+from src.core.memory_ranker import MemoryRanker
+from src.core.memory_store import MemoryStore
+from src.core.memory_summarizer import summarize
+from src.core.memory_vector import MemoryVectorStore
+from src.core.memory_zoom import MemoryZoom
+from src.core.proactive_scanner import scan_upcoming
 
 
 def choose_model() -> str:

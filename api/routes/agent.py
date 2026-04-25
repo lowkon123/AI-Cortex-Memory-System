@@ -34,6 +34,7 @@ class StoreMemoryRequest(BaseModel):
     confidence: float = Field(default=0.7, ge=0.0, le=1.0)
     emotional_weight: float = Field(default=0.0, ge=0.0, le=1.0)
     with_embedding: bool = Field(default=True)
+    is_test: bool = Field(default=False)
 
 
 class RecallRequest(BaseModel):
@@ -73,139 +74,139 @@ def _compose_context(memories: list[dict], system_prefix: str) -> str:
 
 @router.post("/store")
 async def store_memory(payload: StoreMemoryRequest, request: Request):
-    pool = await get_pool(request)
-    now = utc_now()
-    embedding = await get_embedding(payload.content) if payload.with_embedding else None
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(
-            """
-            INSERT INTO memories (
-                id, content, persona, importance, concept_tags, session_id,
-                source_type, memory_kind, confidence, emotional_weight,
-                embedding, created_at, updated_at, status
-            )
-            VALUES (
-                $1, $2, $3, $4, $5::text[], $6::uuid, $7, $8, $9, $10,
-                $11::vector, $12, $13, 'active'
-            )
-            RETURNING id, persona, content, importance, concept_tags,
-                      source_type, memory_kind, confidence, emotional_weight,
-                      created_at, updated_at
-            """,
-            str(uuid4()),
-            payload.content,
-            payload.persona,
-            payload.importance,
-            payload.tags,
-            payload.session_id,
-            payload.source_type,
-            payload.memory_kind,
-            payload.confidence,
-            payload.emotional_weight,
-            embedding,
-            now,
-            now,
-        )
+    from src.models import MemoryNode, MemoryKind, MemorySource
+    from uuid import UUID
+
+    store = request.app.state.store
+    provider = request.app.state.provider
+    integrity = request.app.state.integrity
+
+    # 1. Generate Embedding
+    embedding = await provider.get_embedding(payload.content) if payload.with_embedding else None
+    
+    # 2. Create Node
+    new_node = MemoryNode(
+        content=payload.content,
+        persona=payload.persona,
+        importance=payload.importance,
+        concept_tags=payload.tags,
+        session_id=UUID(payload.session_id) if payload.session_id else None,
+        source_type=MemorySource(payload.source_type),
+        memory_kind=MemoryKind(payload.memory_kind),
+        confidence=payload.confidence,
+        emotional_weight=payload.emotional_weight,
+        embedding=embedding,
+        is_test=payload.is_test
+    )
+
+    # 3. Persistence FIRST (to satisfy Foreign Key constraints for relations)
+    await store.insert(new_node)
+
+    # 4. CONFLICT DETECTION & RESOLUTION
+    conflicts = []
+    if not payload.is_test:
+        conflicts = await integrity.detect_conflicts(new_node)
+        if conflicts:
+            await integrity.resolve_conflicts(new_node, conflicts)
+            # Update the node again if resolve_conflicts modified its metadata/conflict_with
+            await store.update(new_node)
 
     return {
         "ok": True,
+        "conflict_detected": len(conflicts) if not payload.is_test else 0,
         "memory": {
-            "id": str(row["id"]),
-            "persona": row["persona"],
-            "content": row["content"],
-            "importance": row["importance"],
-            "tags": row["concept_tags"] or [],
-            "source_type": row["source_type"],
-            "memory_kind": row["memory_kind"],
-            "confidence": row["confidence"],
-            "emotional_weight": row["emotional_weight"],
-            "created_at": row["created_at"].isoformat(),
-            "updated_at": row["updated_at"].isoformat(),
+            "id": str(new_node.id),
+            "persona": new_node.persona,
+            "content": new_node.content,
+            "importance": new_node.importance,
+            "tags": new_node.concept_tags,
+            "source_type": new_node.source_type.value,
+            "memory_kind": new_node.memory_kind.value,
+            "confidence": new_node.confidence,
+            "is_test": new_node.is_test,
+            "conflict_with": str(new_node.conflict_with) if new_node.conflict_with else None,
+            "created_at": new_node.created_at.isoformat(),
         },
     }
 
 
 @router.post("/recall")
 async def recall_memories(payload: RecallRequest, request: Request):
-    query_embedding = await get_embedding(payload.query)
-    if not query_embedding:
-        raise HTTPException(status_code=500, detail="Failed to generate embedding")
+    import asyncio
+    store = request.app.state.store
+    provider = request.app.state.provider
+    enhancer = request.app.state.enhancer
 
-    pool = await get_pool(request)
-    async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            """
-            SELECT
-                id,
-                content,
-                persona,
-                importance,
-                concept_tags,
-                access_count,
-                success_count,
-                confidence,
-                emotional_weight,
-                source_type,
-                memory_kind,
-                created_at,
-                1 - (embedding <-> $1::vector) AS similarity
-            FROM memories
-            WHERE status = 'active'
-              AND persona = $2
-              AND embedding IS NOT NULL
-              AND 1 - (embedding <-> $1::vector) >= $3
-            ORDER BY embedding <-> $1::vector
-            LIMIT $4
-            """,
-            query_embedding,
-            payload.persona,
-            payload.min_similarity,
-            payload.limit,
+    # 1. Multi-Intent Routing (Query Decomposition)
+    sub_queries = [payload.query]
+    if len(payload.query) > 20 and ("?" in payload.query or "什麼" in payload.query or "然後" in payload.query):
+        sub_queries = await enhancer.expand_query(payload.query)
+        if not sub_queries:
+            sub_queries = [payload.query]
+
+    # 2. Parallel Search for all sub-queries
+    async def _search_sub_query(sq: str):
+        # Advanced Embedding Generation (HyDE)
+        q_emb = await enhancer.generate_hyde_embedding(sq)
+        if not q_emb:
+            return []
+        
+        return await store.search(
+            q_emb,
+            limit=payload.limit,
+            persona=payload.persona,
+            min_similarity=payload.min_similarity
         )
 
-        memories = []
-        for row in rows:
-            similarity = float(row["similarity"])
-            score = (
-                similarity * 0.45
-                + float(row["importance"]) * 0.2
-                + min(1.0, (row["access_count"] or 0) / 10) * 0.1
-                + min(1.0, (row["success_count"] or 0) / 8) * 0.1
-                + float(row["confidence"] or 0) * 0.1
-                + float(row["emotional_weight"] or 0) * 0.05
-            )
-            memories.append(
-                {
-                    "id": str(row["id"]),
-                    "content": row["content"],
-                    "persona": row["persona"],
-                    "importance": float(row["importance"]),
-                    "tags": row["concept_tags"] or [],
-                    "access_count": row["access_count"] or 0,
-                    "success_count": row["success_count"] or 0,
-                    "confidence": float(row["confidence"] or 0),
-                    "emotional_weight": float(row["emotional_weight"] or 0),
-                    "source_type": row["source_type"],
-                    "memory_kind": row["memory_kind"],
-                    "created_at": row["created_at"].isoformat(),
-                    "similarity": round(similarity, 4),
-                    "score": round(score, 4),
-                }
-            )
+    search_tasks = [_search_sub_query(sq) for sq in sub_queries]
+    nested_results = await asyncio.gather(*search_tasks)
 
-        memories.sort(key=lambda item: item["score"], reverse=True)
+    # 3. Deduplicate and merge results
+    unique_memories = {}  # memory_id -> (max_similarity, node)
+    for results in nested_results:
+        for similarity, node in results:
+            if node.id not in unique_memories or similarity > unique_memories[node.id][0]:
+                unique_memories[node.id] = (similarity, node)
 
-        if memories:
-            ids = [m["id"] for m in memories]
-            await conn.execute(
-                """
-                UPDATE memories
-                SET access_count = access_count + 1,
-                    last_accessed = NOW()
-                WHERE id = ANY($1::uuid[])
-                """,
-                ids,
-            )
+    # 4. Sort and limit merged results
+    merged_results = sorted(unique_memories.values(), key=lambda x: x[0], reverse=True)[:payload.limit]
+
+    memories = []
+    for similarity, node in merged_results:
+        # 5. Dynamic Ranking (Cognitive Score)
+        score = (
+            similarity * 0.45
+            + node.importance * 0.2
+            + min(1.0, node.access_count / 10) * 0.1
+            + min(1.0, node.success_count / 8) * 0.1
+            + node.confidence * 0.1
+            + node.emotional_weight * 0.05
+        )
+        
+        memories.append({
+            "id": str(node.id),
+            "content": node.content,
+            "persona": node.persona,
+            "importance": node.importance,
+            "tags": node.concept_tags,
+            "access_count": node.access_count,
+            "success_count": node.success_count,
+            "confidence": node.confidence,
+            "emotional_weight": node.emotional_weight,
+            "source_type": node.source_type.value,
+            "memory_kind": node.memory_kind.value,
+            "created_at": node.created_at.isoformat(),
+            "similarity": round(similarity, 4),
+            "score": round(score, 4),
+        })
+
+    # 4. Update Access Stats
+    if memories:
+        for m_id in [UUID(m["id"]) for m in memories]:
+            node = await store.get(m_id)
+            if node:
+                node.access()
+                await store.update(node)
 
     context = _compose_context(memories, payload.system_prefix) if payload.include_context else ""
     return {

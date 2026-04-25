@@ -1,7 +1,7 @@
 import pytest
 from uuid import uuid4
 from src.models import MemoryNode
-from src.zh_tw.memory_ranker import MemoryRanker
+from src.core.memory_ranker import MemoryRanker
 
 def test_ranker_base_score():
     ranker = MemoryRanker()
