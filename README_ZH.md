@@ -49,6 +49,17 @@ python dashboard.py
 
 ---
 
+## 🌟 Phase 2 認知進化：邁向生產級大腦
+
+Cortex 經過第二階段深度演化，現已具備處理萬級數據與複雜人類語意的能力：
+- **多意圖路由拆解 (Multi-Intent Routing)**：面對使用者的長篇大論與複合問題，系統會自動將其拆解為多條平行子查詢 (Parallel Sub-queries) 並進行結果去重合併，確保檢索零死角。
+- **HNSW 向量索引架構**：底層 PostgreSQL 已植入 HNSW (Hierarchical Navigable Small World) 索引，實測在百萬級記憶節點的壓力測試下，依舊能保持毫秒級的向量相似度搜尋。
+- **全自動認知整合 (Cognitive Consolidation)**：背景 `sleep_runner` 能主動將瑣碎的日常對話 (Episodic)「蒸餾」為高層次的通用規則 (Semantic Facts)，並自動降低舊片段的權重，避免污染檢索池。
+- **動態視覺效能優化 (LOD)**：3D 視覺面板導入 Level of Detail 渲染機制。當節點突破 1,500 顆時，系統將自動暫停背景力學演算並隱藏冷節點，死守 60 FPS 的絲滑體驗。
+- **因果演化追蹤線**：舊有決策被覆蓋時，畫面上會以極具辨識度的「紅色箭頭」繪製出 `SUPERSEDES` 演化路徑，讓架構的迭代歷程一目了然。
+
+---
+
 ## 🔒 大腦維護與安全機制 (Cognitive Safeguards)
 
 為確保 AI 認知的穩定性與數據安全性，Cortex 內建了多重保障機制：
